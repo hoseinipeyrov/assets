@@ -21,4 +21,4 @@ jobs:
 
     - name: publish
       run: |
-        dotnet nuget push **/*.nupkg --source 'https://api.nuget.org/v3/index.json' --skip-duplicate -k ${{ secrets.nuget }} 
+        dotnet nuget push **/*.nupkg --source 'https://api.nuget.org/v3/index.json' --no-symbols --skip-duplicate -k ${{ secrets.nuget }} 
