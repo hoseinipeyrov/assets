@@ -11,7 +11,7 @@
     <PackageIcon>logo-squared.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Squidex/assets/</PackageProjectUrl>
-    <Version>1.1.0</Version>
+    <Version>$(PackageVersion)</Version>
   </PropertyGroup>
 
   <ItemGroup>
