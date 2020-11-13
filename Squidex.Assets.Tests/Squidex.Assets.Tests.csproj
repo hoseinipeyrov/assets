@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FakeItEasy" Version="6.2.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+    <PackageReference Include="RefactoringEssentials" Version="5.6.0" PrivateAssets="all" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>..\Squidex.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Squidex.Assets.Azure\Squidex.Assets.Azure.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.FTP\Squidex.Assets.FTP.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.GoogleCloud\Squidex.Assets.GoogleCloud.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.Mongo\Squidex.Assets.Mongo.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.S3\Squidex.Assets.S3.csproj" />
+    <ProjectReference Include="..\Squidex.Assets\Squidex.Assets.csproj" />
+  </ItemGroup>
+
+</Project>
