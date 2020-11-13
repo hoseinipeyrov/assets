@@ -2,16 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Authors>sebastianstehle</Authors>
-    <Company>Squidex UG (haftungsbeschränkt)</Company>
-    <Description>Squidex Asset Storage</Description>
-    <Copyright>MIT</Copyright>
     <Nullable>enable</Nullable>
-    <PackageTags>Squidex HeadlessCMS Asset Storage</PackageTags>
-    <PackageIcon>logo-squared.png</PackageIcon>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/Squidex/assets/</PackageProjectUrl>
-    <Version>$(PackageVersion)</Version>
   </PropertyGroup>
 
   <ItemGroup>
