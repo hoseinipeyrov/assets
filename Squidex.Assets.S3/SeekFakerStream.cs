@@ -42,7 +42,7 @@ namespace Squidex.Assets
 
         public SeekFakerStream(Stream inner)
         {
-            Guard.NotNull(inner, nameof(inner));
+            AssetsGuard.NotNull(inner, nameof(inner));
 
             if (!inner.CanRead)
             {

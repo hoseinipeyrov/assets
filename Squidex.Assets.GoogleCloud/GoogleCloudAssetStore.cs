@@ -25,7 +25,7 @@ namespace Squidex.Assets
 
         public GoogleCloudAssetStore(string bucketName)
         {
-            Guard.NotNullOrEmpty(bucketName, nameof(bucketName));
+            AssetsGuard.NotNullOrEmpty(bucketName, nameof(bucketName));
 
             this.bucketName = bucketName;
         }
@@ -46,7 +46,7 @@ namespace Squidex.Assets
 
         public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
 
             try
             {
@@ -67,8 +67,8 @@ namespace Squidex.Assets
 
         public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(sourceFileName, nameof(sourceFileName));
-            Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+            AssetsGuard.NotNullOrEmpty(sourceFileName, nameof(sourceFileName));
+            AssetsGuard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
 
             try
             {
@@ -86,7 +86,7 @@ namespace Squidex.Assets
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
 
             try
             {
@@ -107,7 +107,7 @@ namespace Squidex.Assets
 
         public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
 
             try
             {
@@ -121,7 +121,7 @@ namespace Squidex.Assets
 
         public async Task DeleteAsync(string fileName)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
 
             try
             {

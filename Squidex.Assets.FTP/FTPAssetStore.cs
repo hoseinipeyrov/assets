@@ -24,9 +24,9 @@ namespace Squidex.Assets
 
         public FTPAssetStore(Func<IFtpClient> factory, string path, ILogger<FTPAssetStore> log)
         {
-            Guard.NotNull(factory, nameof(factory));
-            Guard.NotNullOrEmpty(path, nameof(path));
-            Guard.NotNull(log, nameof(log));
+            AssetsGuard.NotNull(factory, nameof(factory));
+            AssetsGuard.NotNullOrEmpty(path, nameof(path));
+            AssetsGuard.NotNull(log, nameof(log));
 
             this.factory = factory;
             this.path = path;
@@ -51,7 +51,7 @@ namespace Squidex.Assets
 
         public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
 
             using (var client = GetFtpClient())
             {
@@ -75,8 +75,8 @@ namespace Squidex.Assets
 
         public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(sourceFileName, nameof(sourceFileName));
-            Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+            AssetsGuard.NotNullOrEmpty(sourceFileName, nameof(sourceFileName));
+            AssetsGuard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
 
             using (var client = GetFtpClient())
             {
@@ -105,8 +105,8 @@ namespace Squidex.Assets
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
-            Guard.NotNull(stream, nameof(stream));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNull(stream, nameof(stream));
 
             using (var client = GetFtpClient())
             {
@@ -126,8 +126,8 @@ namespace Squidex.Assets
 
         public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
-            Guard.NotNull(stream, nameof(stream));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNull(stream, nameof(stream));
 
             using (var client = GetFtpClient())
             {
@@ -149,7 +149,7 @@ namespace Squidex.Assets
 
         public async Task DeleteAsync(string fileName)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
 
             using (var client = GetFtpClient())
             {

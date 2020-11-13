@@ -20,7 +20,7 @@ namespace Squidex.Assets
 
         public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
 
             if (!streams.TryGetValue(fileName, out var sourceStream))
             {
@@ -35,8 +35,8 @@ namespace Squidex.Assets
 
         public virtual async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(sourceFileName, nameof(sourceFileName));
-            Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+            AssetsGuard.NotNullOrEmpty(sourceFileName, nameof(sourceFileName));
+            AssetsGuard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
 
             if (!streams.TryGetValue(sourceFileName, out var sourceStream))
             {
@@ -51,8 +51,8 @@ namespace Squidex.Assets
 
         public virtual async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
-            Guard.NotNull(stream, nameof(stream));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNull(stream, nameof(stream));
 
             if (!streams.TryGetValue(fileName, out var sourceStream))
             {
@@ -74,8 +74,8 @@ namespace Squidex.Assets
 
         public virtual async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
-            Guard.NotNull(stream, nameof(stream));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNull(stream, nameof(stream));
 
             var memoryStream = new MemoryStream();
 
@@ -112,7 +112,7 @@ namespace Squidex.Assets
 
         public virtual Task DeleteAsync(string fileName)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
 
             streams.TryRemove(fileName, out _);
 

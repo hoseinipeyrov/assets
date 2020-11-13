@@ -25,7 +25,7 @@ namespace Squidex.Assets
 
         private static string FormatMessage(string fileName)
         {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
 
             return $"An asset with name '{fileName}' already exists.";
         }

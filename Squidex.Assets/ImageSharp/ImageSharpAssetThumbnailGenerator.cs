@@ -28,9 +28,9 @@ namespace Squidex.Assets.ImageSharp
 
         public async Task CreateThumbnailAsync(Stream source, Stream destination, ResizeOptions options)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNull(destination, nameof(destination));
-            Guard.NotNull(options, nameof(options));
+            AssetsGuard.NotNull(source, nameof(source));
+            AssetsGuard.NotNull(destination, nameof(destination));
+            AssetsGuard.NotNull(options, nameof(options));
 
             if (!options.IsValid)
             {
@@ -127,7 +127,7 @@ namespace Squidex.Assets.ImageSharp
 
         public Task<ImageInfo?> GetImageInfoAsync(Stream source)
         {
-            Guard.NotNull(source, nameof(source));
+            AssetsGuard.NotNull(source, nameof(source));
 
             ImageInfo? result = null;
 
@@ -152,8 +152,8 @@ namespace Squidex.Assets.ImageSharp
 
         public async Task<ImageInfo> FixOrientationAsync(Stream source, Stream destination)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNull(destination, nameof(destination));
+            AssetsGuard.NotNull(source, nameof(source));
+            AssetsGuard.NotNull(destination, nameof(destination));
 
             await maxTasks.WaitAsync();
             try

@@ -19,8 +19,8 @@ namespace Squidex.Assets
 
         public ImageInfo(int pixelWidth, int pixelHeight, bool isRotatedOrSwapped)
         {
-            Guard.GreaterThan(pixelWidth, 0, nameof(pixelWidth));
-            Guard.GreaterThan(pixelHeight, 0, nameof(pixelHeight));
+            AssetsGuard.GreaterThan(pixelWidth, 0, nameof(pixelWidth));
+            AssetsGuard.GreaterThan(pixelHeight, 0, nameof(pixelHeight));
 
             PixelWidth = pixelWidth;
             PixelHeight = pixelHeight;
