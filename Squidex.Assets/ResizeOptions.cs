@@ -25,6 +25,8 @@ namespace Squidex.Assets
 
         public float? FocusY { get; set; }
 
+        public string? Background { get; set; }
+
         public bool KeepFormat { get; set; }
 
         public bool IsValid
@@ -64,6 +66,12 @@ namespace Squidex.Assets
             {
                 sb.Append("_format_");
                 sb.Append(Format.ToString());
+            }
+
+            if (!string.IsNullOrWhiteSpace(Background))
+            {
+                sb.Append("_background_");
+                sb.Append(Background);
             }
 
             return sb.ToString();

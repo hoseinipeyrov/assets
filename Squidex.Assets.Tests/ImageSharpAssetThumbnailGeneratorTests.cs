@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using Squidex.Assets.ImageSharp;
 using Xunit;
 
@@ -100,6 +102,52 @@ namespace Squidex.Assets
         }
 
         [Fact]
+        public async Task Should_box_pad_with_transparent_background()
+        {
+            var source = GetImage("feather.png");
+
+            var options = new ResizeOptions { Width = 1000, Height = 1000, Mode = ResizeMode.BoxPad };
+
+            await sut.CreateThumbnailAsync(source, target, options);
+
+            var image = Image.Load(target.ToArray());
+
+            Assert.Equal(1000, image.Width);
+            Assert.Equal(1000, image.Height);
+
+            var transparent = Rgba32.ParseHex("#00000000");
+
+            image.Save("test.png");
+
+            Assert.Equal(transparent, image[0, 0]);
+            Assert.Equal(transparent, image[0, 999]);
+            Assert.Equal(transparent, image[999, 0]);
+            Assert.Equal(transparent, image[999, 999]);
+        }
+
+        [Fact]
+        public async Task Should_box_pad_with_colored_background()
+        {
+            var source = GetImage("feather.png");
+
+            var options = new ResizeOptions { Width = 1000, Height = 1000, Mode = ResizeMode.BoxPad, Background = "red" };
+
+            await sut.CreateThumbnailAsync(source, target, options);
+
+            var image = Image.Load(target.ToArray());
+
+            Assert.Equal(1000, image.Width);
+            Assert.Equal(1000, image.Height);
+
+            var red = Rgba32.ParseHex("#ff0000ff");
+
+            Assert.Equal(red, image[0, 0]);
+            Assert.Equal(red, image[0, 999]);
+            Assert.Equal(red, image[999, 0]);
+            Assert.Equal(red, image[999, 999]);
+        }
+
+        [Fact]
         public async Task Should_auto_orient_image()
         {
             var source = GetRotatedJpeg();
@@ -148,16 +196,23 @@ namespace Squidex.Assets
             Assert.Null(imageInfo);
         }
 
+        private Stream GetImage(string fileName)
+        {
+            var name = $"Squidex.Assets.Tests.Images.{fileName}";
+
+            return GetType().Assembly.GetManifestResourceStream(name)!;
+        }
+
         private Stream GetImage(ImageFormat format)
         {
-            var name = $"Squidex.Assets.Images.logo.{format.ToString().ToLowerInvariant()}";
+            var name = $"Squidex.Assets.Tests.Images.logo.{format.ToString().ToLowerInvariant()}";
 
             return GetType().Assembly.GetManifestResourceStream(name)!;
         }
 
         private Stream GetRotatedJpeg()
         {
-            var name = "Squidex.Assets.Images.logo-wide-rotated.jpg";
+            var name = "Squidex.Assets.Tests.Images.logo-wide-rotated.jpg";
 
             return GetType().Assembly.GetManifestResourceStream(name)!;
         }

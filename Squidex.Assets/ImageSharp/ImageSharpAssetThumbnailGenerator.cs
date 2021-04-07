@@ -70,7 +70,7 @@ namespace Squidex.Assets.ImageSharp
                             resizeMode = ISResizeMode.BoxPad;
                         }
 
-                        var resizeOptions = new ISResizeOptions { Size = new Size(w, h), Mode = resizeMode };
+                        var resizeOptions = new ISResizeOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true };
 
                         if (options.FocusX.HasValue && options.FocusY.HasValue)
                         {
@@ -80,7 +80,19 @@ namespace Squidex.Assets.ImageSharp
                             );
                         }
 
-                        image.Mutate(x => x.Resize(resizeOptions));
+                        image.Mutate(operation =>
+                        {
+                            operation = operation.Resize(resizeOptions);
+
+                            if (Color.TryParse(options.Background, out var color))
+                            {
+                                operation = operation.BackgroundColor(color);
+                            }
+                            else
+                            {
+                                operation = operation.BackgroundColor(Color.Transparent);
+                            }
+                        });
                     }
 
                     await image.SaveAsync(destination, encoder);
@@ -109,10 +121,6 @@ namespace Squidex.Assets.ImageSharp
             {
                 encoder = new JpegEncoder();
             }
-            else if (options.Format == ImageFormat.PNG)
-            {
-                encoder = new PngEncoder();
-            }
             else if (options.Format == ImageFormat.TGA)
             {
                 encoder = new TgaEncoder();
@@ -120,6 +128,13 @@ namespace Squidex.Assets.ImageSharp
             else if (options.Format == ImageFormat.GIF)
             {
                 encoder = new GifEncoder();
+            }
+            else if (options.Format == ImageFormat.PNG || encoder is PngEncoder)
+            {
+                encoder = new PngEncoder
+                {
+                    ColorType = PngColorType.RgbWithAlpha
+                };
             }
 
             return encoder;

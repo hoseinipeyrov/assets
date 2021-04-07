@@ -75,7 +75,7 @@ namespace Squidex.Assets
             TestBytesRange(sut, -5, -3, 0, false, null);
         }
 
-        private static void TestBytesRange(BytesRange sut, long? from, long? to, long length, bool defined, string? formatted)
+        private static void TestBytesRange(BytesRange sut, long? from, long? to, long length, bool defined, string formatted)
         {
             Assert.Equal(from, sut.From);
             Assert.Equal(to, sut.To);
