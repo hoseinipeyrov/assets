@@ -83,6 +83,10 @@ namespace Squidex.Assets
             {
                 throw new AssetNotFoundException(sourceFileName, ex);
             }
+            catch (DirectoryNotFoundException ex)
+            {
+                throw new AssetNotFoundException(sourceFileName, ex);
+            }
         }
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range, CancellationToken ct = default)
@@ -99,6 +103,10 @@ namespace Squidex.Assets
                 }
             }
             catch (FileNotFoundException ex)
+            {
+                throw new AssetNotFoundException(fileName, ex);
+            }
+            catch (DirectoryNotFoundException ex)
             {
                 throw new AssetNotFoundException(fileName, ex);
             }
@@ -127,11 +135,18 @@ namespace Squidex.Assets
 
         public Task DeleteAsync(string fileName)
         {
-            var file = GetFile(fileName, nameof(fileName));
+            try
+            {
+                var file = GetFile(fileName, nameof(fileName));
 
-            file.Delete();
+                file.Delete();
 
-            return Task.CompletedTask;
+                return Task.CompletedTask;
+            }
+            catch (DirectoryNotFoundException)
+            {
+                return Task.CompletedTask;
+            }
         }
 
         private FileInfo GetFile(string fileName, string parameterName)

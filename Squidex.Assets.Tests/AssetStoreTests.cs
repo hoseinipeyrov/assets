@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
@@ -17,9 +18,6 @@ namespace Squidex.Assets
     {
         private readonly MemoryStream assetLarge = CreateFile(4 * 1024 * 1024);
         private readonly MemoryStream assetSmall = CreateFile(4);
-        private readonly string fileName = Guid.NewGuid().ToString();
-        private readonly string fileFolderName = $"{Guid.NewGuid()}/{Guid.NewGuid()}";
-        private readonly string sourceFile = Guid.NewGuid().ToString();
         private readonly Lazy<T> sut;
 
         protected T Sut
@@ -27,10 +25,7 @@ namespace Squidex.Assets
             get { return sut.Value; }
         }
 
-        protected string FileName
-        {
-            get { return fileName; }
-        }
+        protected string FileName { get; } = Guid.NewGuid().ToString();
 
         protected virtual bool CanUploadStreamsWithoutLength => true;
 
@@ -41,22 +36,37 @@ namespace Squidex.Assets
 
         public abstract T CreateStore();
 
-        [Fact]
-        public virtual async Task Should_throw_exception_if_asset_to_get_size_is_not_found()
+        public static IEnumerable<object[]> FolderCases()
         {
-            await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync(fileName));
+            yield return new object[] { false };
+            yield return new object[] { true };
         }
 
-        [Fact]
-        public virtual async Task Should_throw_exception_if_asset_to_download_is_not_found()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public virtual async Task Should_throw_exception_if_asset_to_get_size_is_not_found(bool withFolder)
         {
-            await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.DownloadAsync(fileName, new MemoryStream()));
+            var path = GetPath(withFolder);
+
+            await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync(path));
         }
 
-        [Fact]
-        public async Task Should_throw_exception_if_asset_to_copy_is_not_found()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public virtual async Task Should_throw_exception_if_asset_to_download_is_not_found(bool withFolder)
         {
-            await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.CopyAsync(fileName, sourceFile));
+            var path = GetPath(withFolder);
+
+            await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.DownloadAsync(path, new MemoryStream()));
+        }
+
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_throw_exception_if_asset_to_copy_is_not_found(bool withFolder)
+        {
+            var path = GetPath(withFolder);
+
+            await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.CopyAsync(path, Guid.NewGuid().ToString()));
         }
 
         [Fact]
@@ -101,9 +111,12 @@ namespace Squidex.Assets
             await CheckEmpty(v => Sut.UploadAsync(v, new MemoryStream()));
         }
 
-        [Fact]
-        public async Task Should_upload_compressed_file()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_upload_compressed_file(bool withFolder)
         {
+            var path = GetPath(withFolder);
+
             if (!CanUploadStreamsWithoutLength)
             {
                 return;
@@ -111,76 +124,76 @@ namespace Squidex.Assets
 
             var source = CreateDeflateStream(20_000);
 
-            await Sut.UploadAsync(fileName, source);
+            await Sut.UploadAsync(path, source);
 
             var readData = new MemoryStream();
 
-            await Sut.DownloadAsync(fileName, readData);
+            await Sut.DownloadAsync(path, readData);
 
             Assert.True(readData.Length > 0);
         }
 
-        [Fact]
-        public async Task Should_write_and_read_file()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_write_and_read_file(bool withFolder)
         {
-            await Sut.UploadAsync(fileName, assetSmall);
+            var path = GetPath(withFolder);
+
+            await Sut.UploadAsync(path, assetSmall);
 
             var readData = new MemoryStream();
 
-            await Sut.DownloadAsync(fileName, readData);
+            await Sut.DownloadAsync(path, readData);
 
             Assert.Equal(assetSmall.ToArray(), readData.ToArray());
         }
 
-        [Fact]
-        public async Task Should_write_and_read_file_in_folder()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_write_and_read_large_file(bool withFolder)
         {
-            await Sut.UploadAsync(fileFolderName, assetSmall);
+            var path = GetPath(withFolder);
+
+            await Sut.UploadAsync(path, assetLarge);
 
             var readData = new MemoryStream();
 
-            await Sut.DownloadAsync(fileFolderName, readData);
-
-            Assert.Equal(assetSmall.ToArray(), readData.ToArray());
-        }
-
-        [Fact]
-        public async Task Should_write_and_read_large_file()
-        {
-            await Sut.UploadAsync(fileName, assetLarge);
-
-            var readData = new MemoryStream();
-
-            await Sut.DownloadAsync(fileName, readData);
+            await Sut.DownloadAsync(path, readData);
 
             Assert.Equal(assetLarge.ToArray(), readData.ToArray());
         }
 
-        [Fact]
-        public async Task Should_write_and_read_file_with_range()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_write_and_read_file_with_range(bool withFolder)
         {
-            await Sut.UploadAsync(fileName, assetSmall, true);
+            var path = GetPath(withFolder);
+
+            await Sut.UploadAsync(path, assetSmall, true);
 
             var readData = new MemoryStream();
 
-            await Sut.DownloadAsync(fileName, readData, new BytesRange(1, 2));
+            await Sut.DownloadAsync(path, readData, new BytesRange(1, 2));
 
             Assert.Equal(new Span<byte>(assetSmall.ToArray()).Slice(1, 2).ToArray(), readData.ToArray());
         }
 
-        [Fact]
-        public async Task Should_copy_and_read_file()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_copy_and_read_file(bool withFolder)
         {
+            var path = GetPath(withFolder);
+
             var tempFile = Guid.NewGuid().ToString();
 
             await Sut.UploadAsync(tempFile, assetSmall);
             try
             {
-                await Sut.CopyAsync(tempFile, fileName);
+                await Sut.CopyAsync(tempFile, path);
 
                 var readData = new MemoryStream();
 
-                await Sut.DownloadAsync(fileName, readData);
+                await Sut.DownloadAsync(path, readData);
 
                 Assert.Equal(assetSmall.ToArray(), readData.ToArray());
             }
@@ -190,88 +203,95 @@ namespace Squidex.Assets
             }
         }
 
-        [Fact]
-        public async Task Should_copy_and_read_file_in_folder()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_write_and_and_get_size(bool withFolder)
         {
-            var tempFile = Guid.NewGuid().ToString();
+            var path = GetPath(withFolder);
 
-            await Sut.UploadAsync(tempFile, assetSmall);
-            try
-            {
-                await Sut.CopyAsync(tempFile, fileFolderName);
+            await Sut.UploadAsync(path, assetSmall, true);
 
-                var readData = new MemoryStream();
-
-                await Sut.DownloadAsync(fileFolderName, readData);
-
-                Assert.Equal(assetSmall.ToArray(), readData.ToArray());
-            }
-            finally
-            {
-                await Sut.DeleteAsync(tempFile);
-            }
-        }
-
-        [Fact]
-        public async Task Should_write_and_and_get_size()
-        {
-            await Sut.UploadAsync(fileName, assetSmall, true);
-
-            var size = await Sut.GetSizeAsync(fileName);
+            var size = await Sut.GetSizeAsync(path);
 
             Assert.Equal(assetSmall.Length, size);
         }
 
-        [Fact]
-        public async Task Should_write_and_read_file_and_overwrite_non_existing()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_write_and_read_file_and_overwrite_non_existing(bool withFolder)
         {
-            await Sut.UploadAsync(fileName, assetSmall, true);
+            var path = GetPath(withFolder);
+
+            await Sut.UploadAsync(path, assetSmall, true);
 
             var readData = new MemoryStream();
 
-            await Sut.DownloadAsync(fileName, readData);
+            await Sut.DownloadAsync(path, readData);
 
             Assert.Equal(assetSmall.ToArray(), readData.ToArray());
         }
 
-        [Fact]
-        public async Task Should_write_and_read_overriding_file()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_write_and_read_overriding_file(bool withFolder)
         {
+            var path = GetPath(withFolder);
+
             var oldData = new MemoryStream(new byte[] { 0x1, 0x2, 0x3, 0x4, 0x5 });
 
-            await Sut.UploadAsync(fileName, oldData);
-            await Sut.UploadAsync(fileName, assetSmall, true);
+            await Sut.UploadAsync(path, oldData);
+            await Sut.UploadAsync(path, assetSmall, true);
 
             var readData = new MemoryStream();
 
-            await Sut.DownloadAsync(fileName, readData);
+            await Sut.DownloadAsync(path, readData);
 
             Assert.Equal(assetSmall.ToArray(), readData.ToArray());
         }
 
-        [Fact]
-        public async Task Should_throw_exception_when_file_to_write_already_exists()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_throw_exception_when_file_to_write_already_exists(bool withFolder)
         {
-            await Sut.UploadAsync(fileName, assetSmall);
+            var path = GetPath(withFolder);
 
-            await Assert.ThrowsAsync<AssetAlreadyExistsException>(() => Sut.UploadAsync(fileName, assetSmall));
+            await Sut.UploadAsync(path, assetSmall);
+
+            await Assert.ThrowsAsync<AssetAlreadyExistsException>(() => Sut.UploadAsync(path, assetSmall));
         }
 
-        [Fact]
-        public async Task Should_throw_exception_when_target_file_to_copy_to_already_exists()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_throw_exception_when_target_file_to_copy_to_already_exists(bool withFolder)
         {
-            await Sut.UploadAsync(sourceFile, assetSmall);
-            await Sut.CopyAsync(sourceFile, fileName);
+            var path = GetPath(withFolder);
 
-            await Assert.ThrowsAsync<AssetAlreadyExistsException>(() => Sut.CopyAsync(sourceFile, fileName));
+            var tempFile = Guid.NewGuid().ToString();
+
+            await Sut.UploadAsync(tempFile, assetSmall);
+            await Sut.CopyAsync(tempFile, path);
+
+            await Assert.ThrowsAsync<AssetAlreadyExistsException>(() => Sut.CopyAsync(tempFile, path));
         }
 
-        [Fact]
-        public async Task Should_ignore_when_deleting_not_existing_file()
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_ignore_when_deleting_deleted_file(bool withFolder)
         {
-            await Sut.UploadAsync(sourceFile, assetSmall);
-            await Sut.DeleteAsync(sourceFile);
-            await Sut.DeleteAsync(sourceFile);
+            var path = GetPath(withFolder);
+
+            await Sut.UploadAsync(path, assetSmall);
+            await Sut.DeleteAsync(path);
+            await Sut.DeleteAsync(path);
+        }
+
+        [Theory]
+        [MemberData(nameof(FolderCases))]
+        public async Task Should_ignore_when_deleting_not_existing_file(bool withFolder)
+        {
+            var path = GetPath(withFolder);
+
+            await Sut.DeleteAsync(path);
         }
 
         private static async Task CheckEmpty(Func<string, Task> action)
@@ -314,6 +334,16 @@ namespace Squidex.Assets
             var archive2 = new ZipArchive(memoryStream, ZipArchiveMode.Read);
 
             return archive2.GetEntry("test").Open();
+        }
+
+        private static string GetPath(bool withFolder)
+        {
+            if (withFolder)
+            {
+                return $"{Guid.NewGuid()}/{Guid.NewGuid()}";
+            }
+
+            return $"{Guid.NewGuid()}";
         }
     }
 }
