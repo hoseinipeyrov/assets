@@ -36,35 +36,43 @@ namespace Squidex.Assets
 
         public abstract T CreateStore();
 
+        public enum TestCase
+        {
+            NoFolder,
+            FolderWindows,
+            FolderLinux
+        }
+
         public static IEnumerable<object[]> FolderCases()
         {
-            yield return new object[] { false };
-            yield return new object[] { true };
+            yield return new object[] { TestCase.NoFolder };
+            yield return new object[] { TestCase.FolderWindows };
+            yield return new object[] { TestCase.FolderLinux };
         }
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public virtual async Task Should_throw_exception_if_asset_to_get_size_is_not_found(bool withFolder)
+        public virtual async Task Should_throw_exception_if_asset_to_get_size_is_not_found(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync(path));
         }
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public virtual async Task Should_throw_exception_if_asset_to_download_is_not_found(bool withFolder)
+        public virtual async Task Should_throw_exception_if_asset_to_download_is_not_found(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.DownloadAsync(path, new MemoryStream()));
         }
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_throw_exception_if_asset_to_copy_is_not_found(bool withFolder)
+        public async Task Should_throw_exception_if_asset_to_copy_is_not_found(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.CopyAsync(path, Guid.NewGuid().ToString()));
         }
@@ -111,11 +119,39 @@ namespace Squidex.Assets
             await CheckEmpty(v => Sut.UploadAsync(v, new MemoryStream()));
         }
 
+        [Fact]
+        public async Task Should_unify_folders2()
+        {
+            var folder = Guid.NewGuid().ToString();
+
+            await Sut.UploadAsync(GetPath(TestCase.FolderLinux, folder, folder), assetSmall);
+
+            var readData = new MemoryStream();
+
+            await Sut.DownloadAsync(GetPath(TestCase.FolderWindows, folder, folder), readData);
+
+            Assert.Equal(assetSmall.ToArray(), readData.ToArray());
+        }
+
+        [Fact]
+        public async Task Should_unify_folders1()
+        {
+            var folder = Guid.NewGuid().ToString();
+
+            await Sut.UploadAsync(GetPath(TestCase.FolderLinux, folder, folder), assetSmall);
+
+            var readData = new MemoryStream();
+
+            await Sut.DownloadAsync(GetPath(TestCase.FolderWindows, folder, folder), readData);
+
+            Assert.Equal(assetSmall.ToArray(), readData.ToArray());
+        }
+
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_upload_compressed_file(bool withFolder)
+        public async Task Should_upload_compressed_file(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             if (!CanUploadStreamsWithoutLength)
             {
@@ -135,9 +171,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_write_and_read_file(bool withFolder)
+        public async Task Should_write_and_read_file(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Sut.UploadAsync(path, assetSmall);
 
@@ -150,9 +186,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_write_and_read_large_file(bool withFolder)
+        public async Task Should_write_and_read_large_file(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Sut.UploadAsync(path, assetLarge);
 
@@ -165,9 +201,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_write_and_read_file_with_range(bool withFolder)
+        public async Task Should_write_and_read_file_with_range(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Sut.UploadAsync(path, assetSmall, true);
 
@@ -180,9 +216,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_copy_and_read_file(bool withFolder)
+        public async Task Should_copy_and_read_file(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             var tempFile = Guid.NewGuid().ToString();
 
@@ -205,9 +241,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_write_and_and_get_size(bool withFolder)
+        public async Task Should_write_and_and_get_size(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Sut.UploadAsync(path, assetSmall, true);
 
@@ -218,9 +254,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_write_and_read_file_and_overwrite_non_existing(bool withFolder)
+        public async Task Should_write_and_read_file_and_overwrite_non_existing(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Sut.UploadAsync(path, assetSmall, true);
 
@@ -233,9 +269,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_write_and_read_overriding_file(bool withFolder)
+        public async Task Should_write_and_read_overriding_file(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             var oldData = new MemoryStream(new byte[] { 0x1, 0x2, 0x3, 0x4, 0x5 });
 
@@ -251,9 +287,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_throw_exception_when_file_to_write_already_exists(bool withFolder)
+        public async Task Should_throw_exception_when_file_to_write_already_exists(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Sut.UploadAsync(path, assetSmall);
 
@@ -262,9 +298,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_throw_exception_when_target_file_to_copy_to_already_exists(bool withFolder)
+        public async Task Should_throw_exception_when_target_file_to_copy_to_already_exists(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             var tempFile = Guid.NewGuid().ToString();
 
@@ -276,9 +312,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_ignore_when_deleting_deleted_file(bool withFolder)
+        public async Task Should_ignore_when_deleting_deleted_file(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Sut.UploadAsync(path, assetSmall);
             await Sut.DeleteAsync(path);
@@ -287,9 +323,9 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_ignore_when_deleting_not_existing_file(bool withFolder)
+        public async Task Should_ignore_when_deleting_not_existing_file(TestCase testCase)
         {
-            var path = GetPath(withFolder);
+            var path = GetPath(testCase);
 
             await Sut.DeleteAsync(path);
         }
@@ -336,14 +372,19 @@ namespace Squidex.Assets
             return archive2.GetEntry("test").Open();
         }
 
-        private static string GetPath(bool withFolder)
+        private static string GetPath(TestCase testCase, string folder = null, string file = null)
         {
-            if (withFolder)
-            {
-                return $"{Guid.NewGuid()}/{Guid.NewGuid()}";
-            }
+            file ??= Guid.NewGuid().ToString();
 
-            return $"{Guid.NewGuid()}";
+            switch (testCase)
+            {
+                case TestCase.FolderWindows:
+                    return $"{folder ?? Guid.NewGuid().ToString()}\\{file}";
+                case TestCase.FolderLinux:
+                    return $"{folder ?? Guid.NewGuid().ToString()}/{file}";
+                default:
+                    return $"{Guid.NewGuid()}";
+            }
         }
     }
 }

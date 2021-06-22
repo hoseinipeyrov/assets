@@ -51,13 +51,13 @@ namespace Squidex.Assets
 
         public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
             using (var client = GetFtpClient())
             {
                 try
                 {
-                    var size = await client.GetFileSizeAsync(fileName, ct);
+                    var size = await client.GetFileSizeAsync(name, ct);
 
                     if (size < 0)
                     {
@@ -75,8 +75,8 @@ namespace Squidex.Assets
 
         public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(sourceFileName, nameof(sourceFileName));
-            AssetsGuard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+            var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
+            var targetName = GetFileName(targetFileName, nameof(targetFileName));
 
             using (var client = GetFtpClient())
             {
@@ -86,7 +86,7 @@ namespace Squidex.Assets
                 {
                     try
                     {
-                        var found = await client.DownloadAsync(stream, sourceFileName, token: ct);
+                        var found = await client.DownloadAsync(stream, sourceName, token: ct);
 
                         if (!found)
                         {
@@ -98,21 +98,22 @@ namespace Squidex.Assets
                         throw new AssetNotFoundException(sourceFileName, ex);
                     }
 
-                    await UploadAsync(client, targetFileName, stream, false, ct);
+                    await UploadAsync(client, targetName, stream, false, ct);
                 }
             }
         }
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
             AssetsGuard.NotNull(stream, nameof(stream));
+
+            var name = GetFileName(fileName, nameof(fileName));
 
             using (var client = GetFtpClient())
             {
                 try
                 {
-                    using (var ftpStream = await client.OpenReadAsync(fileName, range.From ?? 0, ct))
+                    using (var ftpStream = await client.OpenReadAsync(name, range.From ?? 0, ct))
                     {
                         await ftpStream.CopyToAsync(stream, range, ct, false);
                     }
@@ -126,12 +127,13 @@ namespace Squidex.Assets
 
         public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
             AssetsGuard.NotNull(stream, nameof(stream));
+
+            var name = GetFileName(fileName, nameof(fileName));
 
             using (var client = GetFtpClient())
             {
-                await UploadAsync(client, fileName, stream, overwrite, ct);
+                await UploadAsync(client, name, stream, overwrite, ct);
             }
         }
 
@@ -149,13 +151,13 @@ namespace Squidex.Assets
 
         public async Task DeleteAsync(string fileName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
             using (var client = GetFtpClient())
             {
                 try
                 {
-                    await client.DeleteFileAsync(fileName);
+                    await client.DeleteFileAsync(name);
                 }
                 catch (FtpException ex)
                 {
@@ -165,6 +167,13 @@ namespace Squidex.Assets
                     }
                 }
             }
+        }
+
+        private static string GetFileName(string fileName, string parameterName)
+        {
+            AssetsGuard.NotNullOrEmpty(fileName, parameterName);
+
+            return fileName.Replace("\\", "/");
         }
 
         private IFtpClient GetFtpClient()

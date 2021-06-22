@@ -50,11 +50,11 @@ namespace Squidex.Assets
 
         public string GeneratePublicUrl(string fileName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
             if (blobContainer.Properties.PublicAccess != BlobContainerPublicAccessType.Blob)
             {
-                var blob = blobContainer.GetBlockBlobReference(fileName);
+                var blob = blobContainer.GetBlockBlobReference(name);
 
                 return blob.Uri.ToString();
             }
@@ -64,11 +64,11 @@ namespace Squidex.Assets
 
         public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
             try
             {
-                var blob = blobContainer.GetBlockBlobReference(fileName);
+                var blob = blobContainer.GetBlockBlobReference(name);
 
                 await blob.FetchAttributesAsync(ct);
 
@@ -82,14 +82,13 @@ namespace Squidex.Assets
 
         public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(sourceFileName, nameof(sourceFileName));
-            AssetsGuard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+            var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
+            var targetName = GetFileName(targetFileName, nameof(targetFileName));
 
             try
             {
-                var sourceBlob = blobContainer.GetBlockBlobReference(sourceFileName);
-
-                var targetBlob = blobContainer.GetBlobReference(targetFileName);
+                var sourceBlob = blobContainer.GetBlockBlobReference(sourceName);
+                var targetBlob = blobContainer.GetBlobReference(targetName);
 
                 await targetBlob.StartCopyAsync(sourceBlob.Uri, null, AccessCondition.GenerateIfNotExistsCondition(), null, null, ct);
 
@@ -118,12 +117,13 @@ namespace Squidex.Assets
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
             AssetsGuard.NotNull(stream, nameof(stream));
+
+            var name = GetFileName(fileName, nameof(fileName));
 
             try
             {
-                var blob = blobContainer.GetBlockBlobReference(fileName);
+                var blob = blobContainer.GetBlockBlobReference(name);
 
                 using (var blobStream = await blob.OpenReadAsync(null, null, null, ct))
                 {
@@ -138,11 +138,13 @@ namespace Squidex.Assets
 
         public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            AssetsGuard.NotNull(stream, nameof(stream));
+
+            var name = GetFileName(fileName, nameof(fileName));
 
             try
             {
-                var tempBlob = blobContainer.GetBlockBlobReference(fileName);
+                var tempBlob = blobContainer.GetBlockBlobReference(name);
 
                 await tempBlob.UploadFromStreamAsync(stream, overwrite ? null : AccessCondition.GenerateIfNotExistsCondition(), null, null, ct);
             }
@@ -154,11 +156,18 @@ namespace Squidex.Assets
 
         public Task DeleteAsync(string fileName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
-            var blob = blobContainer.GetBlockBlobReference(fileName);
+            var blob = blobContainer.GetBlockBlobReference(name);
 
             return blob.DeleteIfExistsAsync();
+        }
+
+        private static string GetFileName(string fileName, string parameterName)
+        {
+            AssetsGuard.NotNullOrEmpty(fileName, parameterName);
+
+            return fileName.Replace("\\", "/");
         }
     }
 }

@@ -20,9 +20,9 @@ namespace Squidex.Assets
 
         public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
-            if (!streams.TryGetValue(fileName, out var sourceStream))
+            if (!streams.TryGetValue(name, out var sourceStream))
             {
                 throw new AssetNotFoundException(fileName);
             }
@@ -35,12 +35,13 @@ namespace Squidex.Assets
 
         public virtual async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(sourceFileName, nameof(sourceFileName));
             AssetsGuard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
 
-            if (!streams.TryGetValue(sourceFileName, out var sourceStream))
+            var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
+
+            if (!streams.TryGetValue(sourceName, out var sourceStream))
             {
-                throw new AssetNotFoundException(sourceFileName);
+                throw new AssetNotFoundException(sourceName);
             }
 
             using (await readerLock.LockAsync())
@@ -51,10 +52,11 @@ namespace Squidex.Assets
 
         public virtual async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
             AssetsGuard.NotNull(stream, nameof(stream));
 
-            if (!streams.TryGetValue(fileName, out var sourceStream))
+            var name = GetFileName(fileName, nameof(fileName));
+
+            if (!streams.TryGetValue(name, out var sourceStream))
             {
                 throw new AssetNotFoundException(fileName);
             }
@@ -74,8 +76,9 @@ namespace Squidex.Assets
 
         public virtual async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
             AssetsGuard.NotNull(stream, nameof(stream));
+
+            var name = GetFileName(fileName, nameof(fileName));
 
             var memoryStream = new MemoryStream();
 
@@ -98,25 +101,32 @@ namespace Squidex.Assets
             {
                 await CopyAsync();
 
-                streams[fileName] = memoryStream;
+                streams[name] = memoryStream;
             }
-            else if (streams.TryAdd(fileName, memoryStream))
+            else if (streams.TryAdd(name, memoryStream))
             {
                 await CopyAsync();
             }
             else
             {
-                throw new AssetAlreadyExistsException(fileName);
+                throw new AssetAlreadyExistsException(name);
             }
         }
 
         public virtual Task DeleteAsync(string fileName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
-            streams.TryRemove(fileName, out _);
+            streams.TryRemove(name, out _);
 
             return Task.CompletedTask;
+        }
+
+        private static string GetFileName(string fileName, string parameterName)
+        {
+            AssetsGuard.NotNullOrEmpty(fileName, parameterName);
+
+            return fileName.Replace("\\", "/");
         }
     }
 }

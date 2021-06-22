@@ -234,6 +234,8 @@ namespace Squidex.Assets
         {
             AssetsGuard.NotNullOrEmpty(fileName, parameterName);
 
+            fileName = fileName.Replace("\\", "/");
+
             if (!string.IsNullOrWhiteSpace(options.BucketFolder))
             {
                 return $"{options.BucketFolder}/{fileName}";

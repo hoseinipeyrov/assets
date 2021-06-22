@@ -139,7 +139,7 @@ namespace Squidex.Assets
         {
             AssetsGuard.NotNullOrEmpty(fileName, parameterName);
 
-            return fileName;
+            return fileName.Replace("\\", "/");
         }
     }
 }

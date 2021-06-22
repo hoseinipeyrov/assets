@@ -46,11 +46,11 @@ namespace Squidex.Assets
 
         public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
             try
             {
-                var obj = await storageClient.GetObjectAsync(bucketName, fileName, null, ct);
+                var obj = await storageClient.GetObjectAsync(bucketName, name, null, ct);
 
                 if (!obj.Size.HasValue)
                 {
@@ -67,16 +67,16 @@ namespace Squidex.Assets
 
         public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(sourceFileName, nameof(sourceFileName));
-            AssetsGuard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+            var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
+            var targetName = GetFileName(targetFileName, nameof(targetFileName));
 
             try
             {
-                await storageClient.CopyObjectAsync(bucketName, sourceFileName, bucketName, targetFileName, IfNotExistsCopy, ct);
+                await storageClient.CopyObjectAsync(bucketName, sourceName, bucketName, targetName, IfNotExistsCopy, ct);
             }
             catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
             {
-                throw new AssetNotFoundException(sourceFileName, ex);
+                throw new AssetNotFoundException(sourceName, ex);
             }
             catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.PreconditionFailed)
             {
@@ -86,7 +86,7 @@ namespace Squidex.Assets
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
             try
             {
@@ -97,7 +97,7 @@ namespace Squidex.Assets
                     downloadOptions.Range = new RangeHeaderValue(range.From, range.To);
                 }
 
-                await storageClient.DownloadObjectAsync(bucketName, fileName, stream, downloadOptions, ct);
+                await storageClient.DownloadObjectAsync(bucketName, name, stream, downloadOptions, ct);
             }
             catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
             {
@@ -107,11 +107,11 @@ namespace Squidex.Assets
 
         public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
             try
             {
-                await storageClient.UploadObjectAsync(bucketName, fileName, "application/octet-stream", stream, overwrite ? null : IfNotExists, ct);
+                await storageClient.UploadObjectAsync(bucketName, name, "application/octet-stream", stream, overwrite ? null : IfNotExists, ct);
             }
             catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.PreconditionFailed)
             {
@@ -121,16 +121,23 @@ namespace Squidex.Assets
 
         public async Task DeleteAsync(string fileName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            var name = GetFileName(fileName, nameof(fileName));
 
             try
             {
-                await storageClient.DeleteObjectAsync(bucketName, fileName);
+                await storageClient.DeleteObjectAsync(bucketName, name);
             }
             catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
             {
                 return;
             }
+        }
+
+        private static string GetFileName(string fileName, string parameterName)
+        {
+            AssetsGuard.NotNullOrEmpty(fileName, parameterName);
+
+            return fileName.Replace("\\", "/");
         }
     }
 }
