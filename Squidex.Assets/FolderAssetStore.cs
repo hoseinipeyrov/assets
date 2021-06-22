@@ -108,6 +108,8 @@ namespace Squidex.Assets
 
             var file = GetFile(fileName, nameof(fileName));
 
+            Directory.CreateDirectory(file.Directory.FullName);
+
             try
             {
                 using (var fileStream = file.Open(overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write))

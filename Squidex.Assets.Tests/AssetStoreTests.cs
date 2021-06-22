@@ -18,6 +18,7 @@ namespace Squidex.Assets
         private readonly MemoryStream assetLarge = CreateFile(4 * 1024 * 1024);
         private readonly MemoryStream assetSmall = CreateFile(4);
         private readonly string fileName = Guid.NewGuid().ToString();
+        private readonly string fileFolderName = $"{Guid.NewGuid()}/{Guid.NewGuid()}";
         private readonly string sourceFile = Guid.NewGuid().ToString();
         private readonly Lazy<T> sut;
 
@@ -30,6 +31,8 @@ namespace Squidex.Assets
         {
             get { return fileName; }
         }
+
+        protected virtual bool CanUploadStreamsWithoutLength => true;
 
         protected AssetStoreTests()
         {
@@ -99,6 +102,25 @@ namespace Squidex.Assets
         }
 
         [Fact]
+        public async Task Should_upload_compressed_file()
+        {
+            if (!CanUploadStreamsWithoutLength)
+            {
+                return;
+            }
+
+            var source = CreateDeflateStream(20_000);
+
+            await Sut.UploadAsync(fileName, source);
+
+            var readData = new MemoryStream();
+
+            await Sut.DownloadAsync(fileName, readData);
+
+            Assert.True(readData.Length > 0);
+        }
+
+        [Fact]
         public async Task Should_write_and_read_file()
         {
             await Sut.UploadAsync(fileName, assetSmall);
@@ -106,6 +128,18 @@ namespace Squidex.Assets
             var readData = new MemoryStream();
 
             await Sut.DownloadAsync(fileName, readData);
+
+            Assert.Equal(assetSmall.ToArray(), readData.ToArray());
+        }
+
+        [Fact]
+        public async Task Should_write_and_read_file_in_folder()
+        {
+            await Sut.UploadAsync(fileFolderName, assetSmall);
+
+            var readData = new MemoryStream();
+
+            await Sut.DownloadAsync(fileFolderName, readData);
 
             Assert.Equal(assetSmall.ToArray(), readData.ToArray());
         }
@@ -120,20 +154,6 @@ namespace Squidex.Assets
             await Sut.DownloadAsync(fileName, readData);
 
             Assert.Equal(assetLarge.ToArray(), readData.ToArray());
-        }
-
-        [Fact]
-        public async Task Should_upload_compressed_file()
-        {
-            var source = CreateDeflateStream(20_000);
-
-            await Sut.UploadAsync(fileName, source);
-
-            var readData = new MemoryStream();
-
-            await Sut.DownloadAsync(fileName, readData);
-
-            Assert.True(readData.Length > 0);
         }
 
         [Fact]
