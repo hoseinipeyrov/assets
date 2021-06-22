@@ -16,12 +16,12 @@ namespace Squidex.Assets
             // From: https://console.aws.amazon.com/iam/home?region=eu-central-1#/users/s3?section=security_credentials
             AssetStore = new AmazonS3AssetStore(new AmazonS3Options
             {
-                AccessKey = "AKIAYR4IRKRWOZHXU5TB",
+                AccessKey = "key",
                 Bucket = "squidex-test",
                 BucketFolder = "squidex-assets",
                 ForcePathStyle = false,
                 RegionName = "eu-central-1",
-                SecretKey = "TbChpTIbBjTJfB6R/BNepIBF6S5g/vZedeH3057s",
+                SecretKey = "secret",
                 ServiceUrl = null
             });
             AssetStore.InitializeAsync().Wait();
