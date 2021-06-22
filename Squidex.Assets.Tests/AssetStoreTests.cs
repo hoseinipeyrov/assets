@@ -169,6 +169,50 @@ namespace Squidex.Assets
         }
 
         [Fact]
+        public async Task Should_copy_and_read_file()
+        {
+            var tempFile = Guid.NewGuid().ToString();
+
+            await Sut.UploadAsync(tempFile, assetSmall);
+            try
+            {
+                await Sut.CopyAsync(tempFile, fileName);
+
+                var readData = new MemoryStream();
+
+                await Sut.DownloadAsync(fileName, readData);
+
+                Assert.Equal(assetSmall.ToArray(), readData.ToArray());
+            }
+            finally
+            {
+                await Sut.DeleteAsync(tempFile);
+            }
+        }
+
+        [Fact]
+        public async Task Should_copy_and_read_file_in_folder()
+        {
+            var tempFile = Guid.NewGuid().ToString();
+
+            await Sut.UploadAsync(tempFile, assetSmall);
+            try
+            {
+                await Sut.CopyAsync(tempFile, fileFolderName);
+
+                var readData = new MemoryStream();
+
+                await Sut.DownloadAsync(fileFolderName, readData);
+
+                Assert.Equal(assetSmall.ToArray(), readData.ToArray());
+            }
+            finally
+            {
+                await Sut.DeleteAsync(tempFile);
+            }
+        }
+
+        [Fact]
         public async Task Should_write_and_and_get_size()
         {
             await Sut.UploadAsync(fileName, assetSmall, true);

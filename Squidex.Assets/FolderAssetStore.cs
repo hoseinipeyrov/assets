@@ -69,6 +69,8 @@ namespace Squidex.Assets
 
             try
             {
+                Directory.CreateDirectory(targetFile.Directory.FullName);
+
                 sourceFile.CopyTo(targetFile.FullName);
 
                 return Task.CompletedTask;
