@@ -10,6 +10,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
@@ -21,8 +22,8 @@ namespace Squidex.Assets
 
         public FolderAssetStore(string path, ILogger<FolderAssetStore> log)
         {
-            AssetsGuard.NotNullOrEmpty(path, nameof(path));
-            AssetsGuard.NotNull(log, nameof(log));
+            Guard.NotNullOrEmpty(path, nameof(path));
+            Guard.NotNull(log, nameof(log));
 
             this.log = log;
 
@@ -91,7 +92,7 @@ namespace Squidex.Assets
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range, CancellationToken ct = default)
         {
-            AssetsGuard.NotNull(stream, nameof(stream));
+            Guard.NotNull(stream, nameof(stream));
 
             var file = GetFile(fileName, nameof(fileName));
 
@@ -114,7 +115,7 @@ namespace Squidex.Assets
 
         public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            AssetsGuard.NotNull(stream, nameof(stream));
+            Guard.NotNull(stream, nameof(stream));
 
             var file = GetFile(fileName, nameof(fileName));
 
@@ -151,7 +152,7 @@ namespace Squidex.Assets
 
         private FileInfo GetFile(string fileName, string parameterName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, parameterName);
+            Guard.NotNullOrEmpty(fileName, parameterName);
 
             return new FileInfo(GetPath(fileName));
         }

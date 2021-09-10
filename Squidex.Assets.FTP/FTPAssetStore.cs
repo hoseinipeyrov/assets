@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentFTP;
 using Microsoft.Extensions.Logging;
+using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
@@ -24,9 +25,9 @@ namespace Squidex.Assets
 
         public FTPAssetStore(Func<IFtpClient> factory, string path, ILogger<FTPAssetStore> log)
         {
-            AssetsGuard.NotNull(factory, nameof(factory));
-            AssetsGuard.NotNullOrEmpty(path, nameof(path));
-            AssetsGuard.NotNull(log, nameof(log));
+            Guard.NotNull(factory, nameof(factory));
+            Guard.NotNullOrEmpty(path, nameof(path));
+            Guard.NotNull(log, nameof(log));
 
             this.factory = factory;
             this.path = path;
@@ -105,7 +106,7 @@ namespace Squidex.Assets
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
         {
-            AssetsGuard.NotNull(stream, nameof(stream));
+            Guard.NotNull(stream, nameof(stream));
 
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -127,7 +128,7 @@ namespace Squidex.Assets
 
         public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            AssetsGuard.NotNull(stream, nameof(stream));
+            Guard.NotNull(stream, nameof(stream));
 
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -171,7 +172,7 @@ namespace Squidex.Assets
 
         private static string GetFileName(string fileName, string parameterName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, parameterName);
+            Guard.NotNullOrEmpty(fileName, parameterName);
 
             return fileName.Replace("\\", "/");
         }

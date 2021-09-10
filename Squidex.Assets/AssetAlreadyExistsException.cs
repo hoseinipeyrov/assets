@@ -7,6 +7,7 @@
 
 using System;
 using System.Runtime.Serialization;
+using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
@@ -25,7 +26,7 @@ namespace Squidex.Assets
 
         private static string FormatMessage(string fileName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
+            Guard.NotNullOrEmpty(fileName, nameof(fileName));
 
             return $"An asset with name '{fileName}' already exists.";
         }

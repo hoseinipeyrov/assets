@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
+using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
@@ -23,7 +24,7 @@ namespace Squidex.Assets
 
         public MongoGridFsAssetStore(IGridFSBucket<string> bucket)
         {
-            AssetsGuard.NotNull(bucket, nameof(bucket));
+            Guard.NotNull(bucket, nameof(bucket));
 
             this.bucket = bucket;
         }
@@ -58,7 +59,7 @@ namespace Squidex.Assets
 
         public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
         {
-            AssetsGuard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+            Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
 
             try
             {
@@ -77,7 +78,7 @@ namespace Squidex.Assets
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range, CancellationToken ct = default)
         {
-            AssetsGuard.NotNull(stream, nameof(stream));
+            Guard.NotNull(stream, nameof(stream));
 
             try
             {
@@ -98,7 +99,7 @@ namespace Squidex.Assets
 
         public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            AssetsGuard.NotNull(stream, nameof(stream));
+            Guard.NotNull(stream, nameof(stream));
 
             try
             {
@@ -137,7 +138,7 @@ namespace Squidex.Assets
 
         private static string GetFileName(string fileName, string parameterName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, parameterName);
+            Guard.NotNullOrEmpty(fileName, parameterName);
 
             return fileName.Replace("\\", "/");
         }

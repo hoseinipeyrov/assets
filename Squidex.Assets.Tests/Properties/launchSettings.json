@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Squidex.Assets.Tests": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "AWS_ACCESSKEY": "AKIAYR4IRKRWOZHXU5TB",
+        "AWS_SECRETKEY": "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"
+      }
+    }
+  }
+}

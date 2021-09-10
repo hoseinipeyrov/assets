@@ -7,6 +7,7 @@
 
 using System;
 using System.IO;
+using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
@@ -20,9 +21,9 @@ namespace Squidex.Assets
 
         protected AssetFile(string fileName, string mimeType, long fileSize)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, nameof(fileName));
-            AssetsGuard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            AssetsGuard.GreaterEquals(fileSize, 0, nameof(fileSize));
+            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+            Guard.GreaterEquals(fileSize, 0, nameof(fileSize));
 
             FileName = fileName;
             FileSize = fileSize;

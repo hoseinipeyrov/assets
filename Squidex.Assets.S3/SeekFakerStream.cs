@@ -7,6 +7,7 @@
 
 using System;
 using System.IO;
+using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
@@ -42,7 +43,7 @@ namespace Squidex.Assets
 
         public SeekFakerStream(Stream inner)
         {
-            AssetsGuard.NotNull(inner, nameof(inner));
+            Guard.NotNull(inner, nameof(inner));
 
             if (!inner.CanRead)
             {

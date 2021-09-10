@@ -8,6 +8,7 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
+using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
@@ -44,7 +45,7 @@ namespace Squidex.Assets
 
         public HasherStream(Stream inner, HashAlgorithmName hashAlgorithmName)
         {
-            AssetsGuard.NotNull(inner, nameof(inner));
+            Guard.NotNull(inner, nameof(inner));
 
             if (!inner.CanRead)
             {

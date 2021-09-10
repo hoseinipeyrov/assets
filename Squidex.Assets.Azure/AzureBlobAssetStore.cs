@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Blob;
+using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
@@ -22,8 +23,8 @@ namespace Squidex.Assets
 
         public AzureBlobAssetStore(string connectionString, string containerName)
         {
-            AssetsGuard.NotNullOrEmpty(containerName, nameof(containerName));
-            AssetsGuard.NotNullOrEmpty(connectionString, nameof(connectionString));
+            Guard.NotNullOrEmpty(containerName, nameof(containerName));
+            Guard.NotNullOrEmpty(connectionString, nameof(connectionString));
 
             this.connectionString = connectionString;
             this.containerName = containerName;
@@ -117,7 +118,7 @@ namespace Squidex.Assets
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
         {
-            AssetsGuard.NotNull(stream, nameof(stream));
+            Guard.NotNull(stream, nameof(stream));
 
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -138,7 +139,7 @@ namespace Squidex.Assets
 
         public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
         {
-            AssetsGuard.NotNull(stream, nameof(stream));
+            Guard.NotNull(stream, nameof(stream));
 
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -165,7 +166,7 @@ namespace Squidex.Assets
 
         private static string GetFileName(string fileName, string parameterName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, parameterName);
+            Guard.NotNullOrEmpty(fileName, parameterName);
 
             return fileName.Replace("\\", "/");
         }

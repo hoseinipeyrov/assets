@@ -9,9 +9,9 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Squidex.Assets
+namespace Squidex.Assets.Internal
 {
-    public static class AssetsGuard
+    public static class Guard
     {
         [DebuggerStepThrough]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Google;
 using Google.Cloud.Storage.V1;
+using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
@@ -25,7 +26,7 @@ namespace Squidex.Assets
 
         public GoogleCloudAssetStore(string bucketName)
         {
-            AssetsGuard.NotNullOrEmpty(bucketName, nameof(bucketName));
+            Guard.NotNullOrEmpty(bucketName, nameof(bucketName));
 
             this.bucketName = bucketName;
         }
@@ -135,7 +136,7 @@ namespace Squidex.Assets
 
         private static string GetFileName(string fileName, string parameterName)
         {
-            AssetsGuard.NotNullOrEmpty(fileName, parameterName);
+            Guard.NotNullOrEmpty(fileName, parameterName);
 
             return fileName.Replace("\\", "/");
         }

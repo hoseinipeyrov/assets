@@ -17,6 +17,7 @@ using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Tga;
 using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 using SixLabors.ImageSharp.Processing;
+using Squidex.Assets.Internal;
 using ISResizeMode = SixLabors.ImageSharp.Processing.ResizeMode;
 using ISResizeOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
@@ -28,9 +29,9 @@ namespace Squidex.Assets.ImageSharp
 
         public async Task CreateThumbnailAsync(Stream source, Stream destination, ResizeOptions options)
         {
-            AssetsGuard.NotNull(source, nameof(source));
-            AssetsGuard.NotNull(destination, nameof(destination));
-            AssetsGuard.NotNull(options, nameof(options));
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNull(destination, nameof(destination));
+            Guard.NotNull(options, nameof(options));
 
             if (!options.IsValid)
             {
@@ -142,7 +143,7 @@ namespace Squidex.Assets.ImageSharp
 
         public Task<ImageInfo?> GetImageInfoAsync(Stream source)
         {
-            AssetsGuard.NotNull(source, nameof(source));
+            Guard.NotNull(source, nameof(source));
 
             ImageInfo? result = null;
 
@@ -167,8 +168,8 @@ namespace Squidex.Assets.ImageSharp
 
         public async Task<ImageInfo> FixOrientationAsync(Stream source, Stream destination)
         {
-            AssetsGuard.NotNull(source, nameof(source));
-            AssetsGuard.NotNull(destination, nameof(destination));
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNull(destination, nameof(destination));
 
             await maxTasks.WaitAsync();
             try

@@ -5,6 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Assets.Internal;
+
 namespace Squidex.Assets
 {
     public sealed class ImageInfo
@@ -19,8 +21,8 @@ namespace Squidex.Assets
 
         public ImageInfo(int pixelWidth, int pixelHeight, bool isRotatedOrSwapped)
         {
-            AssetsGuard.GreaterThan(pixelWidth, 0, nameof(pixelWidth));
-            AssetsGuard.GreaterThan(pixelHeight, 0, nameof(pixelHeight));
+            Guard.GreaterThan(pixelWidth, 0, nameof(pixelWidth));
+            Guard.GreaterThan(pixelHeight, 0, nameof(pixelHeight));
 
             PixelWidth = pixelWidth;
             PixelHeight = pixelHeight;
