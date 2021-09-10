@@ -17,6 +17,8 @@ namespace Squidex.Assets
 
         protected override bool CanUploadStreamsWithoutLength => false;
 
+        protected override bool CanDeleteAssetsWithPrefix => false;
+
         public FTPAssetStoreTests(FTPAssetStoreFixture fixture)
         {
             _ = fixture;

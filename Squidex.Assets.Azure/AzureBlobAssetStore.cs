@@ -9,39 +9,54 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Storage;
-using Microsoft.Azure.Storage.Blob;
+using Azure;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
     public class AzureBlobAssetStore : IAssetStore
     {
+        private static readonly BlobUploadOptions NoOverwriteUpload = new BlobUploadOptions
+        {
+            Conditions = new BlobRequestConditions
+            {
+                IfNoneMatch = new ETag("*")
+            }
+        };
+        private static readonly BlobCopyFromUriOptions NoOverwriteCopy = new BlobCopyFromUriOptions
+        {
+            DestinationConditions = new BlobRequestConditions
+            {
+                IfNoneMatch = new ETag("*")
+            }
+        };
         private readonly string containerName;
         private readonly string connectionString;
-        private CloudBlobContainer blobContainer;
+        private BlobContainerClient blobContainer;
+        private BlobContainerProperties blobContainerProperties;
 
-        public AzureBlobAssetStore(string connectionString, string containerName)
+        public AzureBlobAssetStore(AzureBlobAssetOptions options)
         {
-            Guard.NotNullOrEmpty(containerName, nameof(containerName));
-            Guard.NotNullOrEmpty(connectionString, nameof(connectionString));
+            Guard.NotNull(options, nameof(options));
+            Guard.NotNullOrEmpty(options.ContainerName, nameof(options.ContainerName));
+            Guard.NotNullOrEmpty(options.ConnectionString, nameof(options.ConnectionString));
 
-            this.connectionString = connectionString;
-            this.containerName = containerName;
+            connectionString = options.ConnectionString;
+            containerName = options.ContainerName;
         }
 
         public async Task InitializeAsync(CancellationToken ct = default)
         {
             try
             {
-                var storageAccount = CloudStorageAccount.Parse(connectionString);
+                var blobServiceClient = new BlobServiceClient(connectionString);
 
-                var blobClient = storageAccount.CreateCloudBlobClient();
-                var blobReference = blobClient.GetContainerReference(containerName);
+                blobContainer = blobServiceClient.GetBlobContainerClient(containerName);
+                blobContainerProperties = await blobContainer.GetPropertiesAsync(cancellationToken: ct);
 
-                await blobReference.CreateIfNotExistsAsync(ct);
-
-                blobContainer = blobReference;
+                await blobContainer.CreateIfNotExistsAsync(cancellationToken: ct);
             }
             catch (Exception ex)
             {
@@ -53,9 +68,9 @@ namespace Squidex.Assets
         {
             var name = GetFileName(fileName, nameof(fileName));
 
-            if (blobContainer.Properties.PublicAccess != BlobContainerPublicAccessType.Blob)
+            if (blobContainerProperties.PublicAccess != PublicAccessType.Blob)
             {
-                var blob = blobContainer.GetBlockBlobReference(name);
+                var blob = blobContainer.GetBlobClient(name);
 
                 return blob.Uri.ToString();
             }
@@ -69,13 +84,13 @@ namespace Squidex.Assets
 
             try
             {
-                var blob = blobContainer.GetBlockBlobReference(name);
+                var blob = blobContainer.GetBlobClient(name);
 
-                await blob.FetchAttributesAsync(ct);
+                var properties = await blob.GetPropertiesAsync();
 
-                return blob.Properties.Length;
+                return properties.Value.ContentLength;
             }
-            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == 404)
+            catch (RequestFailedException ex) when (ex.Status == 404)
             {
                 throw new AssetNotFoundException(fileName, ex);
             }
@@ -88,29 +103,30 @@ namespace Squidex.Assets
 
             try
             {
-                var sourceBlob = blobContainer.GetBlockBlobReference(sourceName);
-                var targetBlob = blobContainer.GetBlobReference(targetName);
+                var blobSource = blobContainer.GetBlobClient(sourceName);
+                var blobTarget = blobContainer.GetBlobClient(targetName);
 
-                await targetBlob.StartCopyAsync(sourceBlob.Uri, null, AccessCondition.GenerateIfNotExistsCondition(), null, null, ct);
+                await blobTarget.StartCopyFromUriAsync(blobSource.Uri, NoOverwriteCopy, cancellationToken: ct);
 
-                while (targetBlob.CopyState.Status == CopyStatus.Pending)
+                BlobProperties targetProperties;
+                do
                 {
-                    ct.ThrowIfCancellationRequested();
+                    targetProperties = await blobTarget.GetPropertiesAsync();
 
                     await Task.Delay(50, ct);
-                    await targetBlob.FetchAttributesAsync(null, null, null, ct);
                 }
+                while (targetProperties.CopyStatus == CopyStatus.Pending);
 
-                if (targetBlob.CopyState.Status != CopyStatus.Success)
+                if (targetProperties.CopyStatus != CopyStatus.Success)
                 {
-                    throw new StorageException($"Copy of temporary file failed: {targetBlob.CopyState.Status}");
+                    throw new AssetStoreException($"Copy of temporary file failed: {targetProperties.CopyStatus}");
                 }
             }
-            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == 409)
+            catch (RequestFailedException ex) when (ex.Status == 409)
             {
                 throw new AssetAlreadyExistsException(targetFileName, ex);
             }
-            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == 404)
+            catch (RequestFailedException ex) when (ex.Status == 404)
             {
                 throw new AssetNotFoundException(sourceFileName, ex);
             }
@@ -124,14 +140,16 @@ namespace Squidex.Assets
 
             try
             {
-                var blob = blobContainer.GetBlockBlobReference(name);
+                var blob = blobContainer.GetBlobClient(name);
 
-                using (var blobStream = await blob.OpenReadAsync(null, null, null, ct))
+                var result = await blob.DownloadStreamingAsync(new HttpRange(range.From ?? 0, range.To), cancellationToken: ct);
+
+                using (result.Value.Content)
                 {
-                    await blobStream.CopyToAsync(stream, range, ct);
+                    await result.Value.Content.CopyToAsync(stream, ct);
                 }
             }
-            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == 404)
+            catch (RequestFailedException ex) when (ex.Status == 404)
             {
                 throw new AssetNotFoundException(fileName, ex);
             }
@@ -145,23 +163,35 @@ namespace Squidex.Assets
 
             try
             {
-                var tempBlob = blobContainer.GetBlockBlobReference(name);
+                var blob = blobContainer.GetBlobClient(name);
 
-                await tempBlob.UploadFromStreamAsync(stream, overwrite ? null : AccessCondition.GenerateIfNotExistsCondition(), null, null, ct);
+                await blob.UploadAsync(stream, overwrite ? null : NoOverwriteUpload, ct);
             }
-            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == 409)
+            catch (RequestFailedException ex) when (ex.Status == 409)
             {
                 throw new AssetAlreadyExistsException(fileName, ex);
             }
         }
 
-        public Task DeleteAsync(string fileName)
+        public async Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        {
+            var name = GetFileName(prefix, nameof(prefix));
+
+            var items = blobContainer.GetBlobsAsync(prefix: name, cancellationToken: ct);
+
+            await foreach (var item in items)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                await blobContainer.DeleteBlobIfExistsAsync(item.Name, cancellationToken: ct);
+            }
+        }
+
+        public Task DeleteAsync(string fileName, CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
-            var blob = blobContainer.GetBlockBlobReference(name);
-
-            return blob.DeleteIfExistsAsync();
+            return blobContainer.DeleteBlobIfExistsAsync(name, cancellationToken: ct);
         }
 
         private static string GetFileName(string fileName, string parameterName)

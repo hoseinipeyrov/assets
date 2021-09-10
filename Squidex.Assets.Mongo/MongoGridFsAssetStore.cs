@@ -18,6 +18,7 @@ namespace Squidex.Assets
 {
     public sealed class MongoGridFsAssetStore : IAssetStore
     {
+        private static readonly FilterDefinitionBuilder<GridFSFileInfo<string>> Filters = Builders<GridFSFileInfo<string>>.Filter;
         private static readonly GridFSDownloadOptions DownloadDefault = new GridFSDownloadOptions();
         private static readonly GridFSDownloadOptions DownloadSeekable = new GridFSDownloadOptions { Seekable = true };
         private readonly IGridFSBucket<string> bucket;
@@ -45,26 +46,25 @@ namespace Squidex.Assets
         {
             var name = GetFileName(fileName, nameof(fileName));
 
-            var query = await bucket.FindAsync(Builders<GridFSFileInfo<string>>.Filter.Eq(x => x.Id, name), cancellationToken: ct);
+            var fileQuery = await bucket.FindAsync(Filters.Eq(x => x.Id, name), cancellationToken: ct);
+            var fileObject = await fileQuery.FirstOrDefaultAsync(ct);
 
-            var file = await query.FirstOrDefaultAsync(cancellationToken: ct);
-
-            if (file == null)
+            if (fileObject == null)
             {
                 throw new AssetNotFoundException(fileName);
             }
 
-            return file.Length;
+            return fileObject.Length;
         }
 
         public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
         {
             Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
 
+            var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
+
             try
             {
-                var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
-
                 await using (var readStream = await bucket.OpenDownloadStreamAsync(sourceName, cancellationToken: ct))
                 {
                     await UploadAsync(targetFileName, readStream, false, ct);
@@ -80,10 +80,10 @@ namespace Squidex.Assets
         {
             Guard.NotNull(stream, nameof(stream));
 
+            var name = GetFileName(fileName, nameof(fileName));
+
             try
             {
-                var name = GetFileName(fileName, nameof(fileName));
-
                 var options = range.IsDefined ? DownloadSeekable : DownloadDefault;
 
                 using (var readStream = await bucket.OpenDownloadStreamAsync(name, options, ct))
@@ -101,10 +101,10 @@ namespace Squidex.Assets
         {
             Guard.NotNull(stream, nameof(stream));
 
+            var name = GetFileName(fileName, nameof(fileName));
+
             try
             {
-                var name = GetFileName(fileName, nameof(fileName));
-
                 if (overwrite)
                 {
                     await DeleteAsync(fileName);
@@ -122,13 +122,41 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DeleteAsync(string fileName)
+        public async Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
         {
+            var name = GetFileName(prefix, nameof(prefix));
+
             try
             {
-                var name = GetFileName(fileName, nameof(fileName));
+                var match = new BsonRegularExpression($"^{name}");
 
-                await bucket.DeleteAsync(name);
+                var fileQuery = await bucket.FindAsync(Filters.Regex(x => x.Id, match), cancellationToken: ct);
+
+                await fileQuery.ForEachAsync(async file =>
+                {
+                    try
+                    {
+                        await bucket.DeleteAsync(file.Id, ct);
+                    }
+                    catch (GridFSFileNotFoundException)
+                    {
+                        return;
+                    }
+                }, ct);
+            }
+            catch (GridFSFileNotFoundException)
+            {
+                return;
+            }
+        }
+
+        public async Task DeleteAsync(string fileName, CancellationToken ct = default)
+        {
+            var name = GetFileName(fileName, nameof(fileName));
+
+            try
+            {
+                await bucket.DeleteAsync(name, ct);
             }
             catch (GridFSFileNotFoundException)
             {

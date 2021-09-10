@@ -7,7 +7,7 @@
 
 namespace Squidex.Assets
 {
-    public sealed class AmazonS3Options
+    public sealed class AmazonS3AssetOptions
     {
         public string ServiceUrl { get; set; }
 

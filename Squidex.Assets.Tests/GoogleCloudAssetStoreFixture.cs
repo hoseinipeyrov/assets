@@ -15,7 +15,10 @@ namespace Squidex.Assets
 
         public GoogleCloudAssetStoreFixture()
         {
-            AssetStore = new GoogleCloudAssetStore("squidex-test");
+            AssetStore = new GoogleCloudAssetStore(new GoogleCloudAssetOptions
+            {
+                BucketName = "squidex-test"
+            });
             AssetStore.InitializeAsync().Wait();
         }
 

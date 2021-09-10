@@ -29,7 +29,7 @@ namespace Squidex.Assets
         [Fact]
         public async Task Should_throw_exception_for_invalid_config()
         {
-            var sut = new AmazonS3AssetStore(new AmazonS3Options
+            var sut = new AmazonS3AssetStore(new AmazonS3AssetOptions
             {
                 ServiceUrl = null,
                 RegionName = "invalid",

@@ -29,6 +29,8 @@ namespace Squidex.Assets
 
         protected virtual bool CanUploadStreamsWithoutLength => true;
 
+        protected virtual bool CanDeleteAssetsWithPrefix => true;
+
         protected AssetStoreTests()
         {
             sut = new Lazy<T>(CreateStore);
@@ -269,7 +271,7 @@ namespace Squidex.Assets
 
         [Theory]
         [MemberData(nameof(FolderCases))]
-        public async Task Should_write_and_read_overriding_file(TestCase testCase)
+        public async Task Should_write_and_read_overrided_file(TestCase testCase)
         {
             var path = GetPath(testCase);
 
@@ -291,7 +293,7 @@ namespace Squidex.Assets
         {
             var path = GetPath(testCase);
 
-            await Sut.UploadAsync(path, assetSmall);
+            await Sut.UploadAndResetAsync(path, assetSmall);
 
             await Assert.ThrowsAsync<AssetAlreadyExistsException>(() => Sut.UploadAsync(path, assetSmall));
         }
@@ -328,6 +330,53 @@ namespace Squidex.Assets
             var path = GetPath(testCase);
 
             await Sut.DeleteAsync(path);
+        }
+
+        [Fact]
+        public async Task Should_delete_folder_prefix()
+        {
+            var folder1 = Guid.NewGuid().ToString();
+            var folder2 = Guid.NewGuid().ToString();
+
+            await Sut.UploadAndResetAsync($"{folder1}/file1.txt", assetSmall);
+            await Sut.UploadAndResetAsync($"{folder1}/file2.txt", assetSmall);
+
+            await Sut.UploadAndResetAsync($"{folder2}/file1.txt", assetSmall);
+            await Sut.UploadAndResetAsync($"{folder2}/file2.txt", assetSmall);
+
+            await Sut.DeleteByPrefixAsync(folder1);
+
+            await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync($"{folder1}/file1.txt"));
+            await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync($"{folder1}/file2.txt"));
+
+            Assert.True(await Sut.GetSizeAsync($"{folder2}/file1.txt") > 0);
+            Assert.True(await Sut.GetSizeAsync($"{folder2}/file2.txt") > 0);
+        }
+
+        [Fact]
+        public async Task Should_delete_normal_prefix()
+        {
+            if (!CanDeleteAssetsWithPrefix)
+            {
+                return;
+            }
+
+            var folder1 = Guid.NewGuid().ToString();
+            var folder2 = Guid.NewGuid().ToString();
+
+            await Sut.UploadAndResetAsync($"{folder1}/prefix1-file1.txt", assetSmall);
+            await Sut.UploadAndResetAsync($"{folder1}/prefix1-file2.txt", assetSmall);
+
+            await Sut.UploadAndResetAsync($"{folder2}/prefix2-file1.txt", assetSmall);
+            await Sut.UploadAndResetAsync($"{folder2}/prefix2-file2.txt", assetSmall);
+
+            await Sut.DeleteByPrefixAsync($"{folder1}/prefix1");
+
+            await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync($"{folder1}/prefix1-file1.txt"));
+            await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync($"{folder1}/prefix1-file2.txt"));
+
+            Assert.True(await Sut.GetSizeAsync($"{folder2}/prefix2-file1.txt") > 0);
+            Assert.True(await Sut.GetSizeAsync($"{folder2}/prefix2-file2.txt") > 0);
         }
 
         private static async Task CheckEmpty(Func<string, Task> action)

@@ -5,20 +5,23 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.IO;
+using System.Threading.Tasks;
+
 namespace Squidex.Assets
 {
-    public sealed class AzureBlobAssetStoreFixture
+    internal static class AssetStorageException
     {
-        public AzureBlobAssetStore AssetStore { get; }
-
-        public AzureBlobAssetStoreFixture()
+        public static async Task UploadAndResetAsync(this IAssetStore assetStore, string name, Stream stream)
         {
-            AssetStore = new AzureBlobAssetStore(new AzureBlobAssetOptions
+            try
             {
-                ConnectionString = "UseDevelopmentStorage=true",
-                ContainerName = "squidex-test-container"
-            });
-            AssetStore.InitializeAsync().Wait();
+                await assetStore.UploadAsync(name, stream);
+            }
+            finally
+            {
+                stream.Position = 0;
+            }
         }
     }
 }

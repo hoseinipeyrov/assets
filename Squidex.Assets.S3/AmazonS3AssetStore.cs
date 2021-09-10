@@ -20,12 +20,13 @@ namespace Squidex.Assets
     public sealed class AmazonS3AssetStore : DisposableObjectBase, IAssetStore
     {
         private const int BufferSize = 81920;
-        private readonly AmazonS3Options options;
+        private readonly AmazonS3AssetOptions options;
         private TransferUtility transferUtility;
         private IAmazonS3 s3Client;
 
-        public AmazonS3AssetStore(AmazonS3Options options)
+        public AmazonS3AssetStore(AmazonS3AssetOptions options)
         {
+            Guard.NotNull(options, nameof(options));
             Guard.NotNullOrEmpty(options.Bucket, nameof(options.Bucket));
             Guard.NotNullOrEmpty(options.AccessKey, nameof(options.AccessKey));
             Guard.NotNullOrEmpty(options.SecretKey, nameof(options.SecretKey));
@@ -99,19 +100,19 @@ namespace Squidex.Assets
 
         public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
         {
-            var sourceKey = GetKey(sourceFileName, nameof(sourceFileName));
-            var targetKey = GetKey(targetFileName, nameof(targetFileName));
+            var keySource = GetKey(sourceFileName, nameof(sourceFileName));
+            var keyTarget = GetKey(targetFileName, nameof(targetFileName));
 
             try
             {
-                await EnsureNotExistsAsync(targetKey, targetFileName, ct);
+                await EnsureNotExistsAsync(keyTarget, targetFileName, ct);
 
                 var request = new CopyObjectRequest
                 {
                     SourceBucket = options.Bucket,
-                    SourceKey = sourceKey,
+                    SourceKey = keySource,
                     DestinationBucket = options.Bucket,
-                    DestinationKey = targetKey
+                    DestinationKey = keyTarget
                 };
 
                 await s3Client.CopyObjectAsync(request, ct);
@@ -211,7 +212,57 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DeleteAsync(string fileName)
+        public async Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        {
+            var key = GetKey(prefix, nameof(prefix));
+
+            try
+            {
+                var request = new DeleteObjectRequest
+                {
+                    BucketName = options.Bucket
+                };
+
+                string continuationToken = null;
+
+                while (!ct.IsCancellationRequested)
+                {
+                    var items = await s3Client.ListObjectsV2Async(new ListObjectsV2Request
+                    {
+                        BucketName = options.Bucket,
+                        Prefix = key,
+                        ContinuationToken = continuationToken
+                    });
+
+                    foreach (var item in items.S3Objects)
+                    {
+                        try
+                        {
+                            request.Key = item.Key;
+
+                            await s3Client.DeleteObjectAsync(request);
+                        }
+                        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                        {
+                            continue;
+                        }
+                    }
+
+                    continuationToken = items.NextContinuationToken;
+
+                    if (string.IsNullOrWhiteSpace(continuationToken))
+                    {
+                        break;
+                    }
+                }
+            }
+            catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                return;
+            }
+        }
+
+        public async Task DeleteAsync(string fileName, CancellationToken ct = default)
         {
             var key = GetKey(fileName, nameof(fileName));
 
@@ -223,7 +274,7 @@ namespace Squidex.Assets
                     Key = key
                 };
 
-                await s3Client.DeleteObjectAsync(request);
+                await s3Client.DeleteObjectAsync(request, ct);
             }
             catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {

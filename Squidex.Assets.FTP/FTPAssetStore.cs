@@ -19,58 +19,64 @@ namespace Squidex.Assets
     [ExcludeFromCodeCoverage]
     public sealed class FTPAssetStore : IAssetStore
     {
-        private readonly string path;
         private readonly ILogger<FTPAssetStore> log;
-        private readonly Func<IFtpClient> factory;
+        private readonly FTPClientPool pool;
+        private readonly FTPAssetOptions options;
 
-        public FTPAssetStore(Func<IFtpClient> factory, string path, ILogger<FTPAssetStore> log)
+        public FTPAssetStore(Func<IFtpClient> clientFactory, FTPAssetOptions options, ILogger<FTPAssetStore> log)
         {
-            Guard.NotNull(factory, nameof(factory));
-            Guard.NotNullOrEmpty(path, nameof(path));
             Guard.NotNull(log, nameof(log));
+            Guard.NotNull(options, nameof(options));
+            Guard.NotNullOrEmpty(options.Path, nameof(options.Path));
 
-            this.factory = factory;
-            this.path = path;
+            pool = new FTPClientPool(clientFactory, 1);
+
+            this.options = options;
 
             this.log = log;
         }
 
         public async Task InitializeAsync(CancellationToken ct = default)
         {
-            using (var client = factory())
+            var client = await GetClientAsync(ct);
+            try
             {
-                await client.ConnectAsync(ct);
-
-                if (!await client.DirectoryExistsAsync(path, ct))
+                if (!await client.DirectoryExistsAsync(options.Path, ct))
                 {
-                    await client.CreateDirectoryAsync(path, ct);
+                    await client.CreateDirectoryAsync(options.Path, ct);
                 }
             }
+            finally
+            {
+                pool.Return(client);
+            }
 
-            log.LogInformation("Initialized with {path}", path);
+            log.LogInformation("Initialized with {path}", options.Path);
         }
 
         public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
-            using (var client = GetFtpClient())
+            var client = await GetClientAsync(ct);
+            try
             {
-                try
-                {
-                    var size = await client.GetFileSizeAsync(name, ct);
+                var size = await client.GetFileSizeAsync(name, 0, ct);
 
-                    if (size < 0)
-                    {
-                        throw new AssetNotFoundException(fileName);
-                    }
-
-                    return size;
-                }
-                catch (FtpException ex) when (IsNotFound(ex))
+                if (size < 0)
                 {
-                    throw new AssetNotFoundException(fileName, ex);
+                    throw new AssetNotFoundException(fileName);
                 }
+
+                return size;
+            }
+            catch (FtpException ex) when (IsNotFound(ex))
+            {
+                throw new AssetNotFoundException(fileName, ex);
+            }
+            finally
+            {
+                pool.Return(client);
             }
         }
 
@@ -79,7 +85,8 @@ namespace Squidex.Assets
             var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
             var targetName = GetFileName(targetFileName, nameof(targetFileName));
 
-            using (var client = GetFtpClient())
+            var client = await GetClientAsync(ct);
+            try
             {
                 var tempPath = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
 
@@ -102,6 +109,10 @@ namespace Squidex.Assets
                     await UploadAsync(client, targetName, stream, false, ct);
                 }
             }
+            finally
+            {
+                pool.Return(client);
+            }
         }
 
         public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
@@ -110,19 +121,21 @@ namespace Squidex.Assets
 
             var name = GetFileName(fileName, nameof(fileName));
 
-            using (var client = GetFtpClient())
+            var client = await GetClientAsync(ct);
+            try
             {
-                try
+                using (var ftpStream = await client.OpenReadAsync(name, range.From ?? 0, ct))
                 {
-                    using (var ftpStream = await client.OpenReadAsync(name, range.From ?? 0, ct))
-                    {
-                        await ftpStream.CopyToAsync(stream, range, ct, false);
-                    }
+                    await ftpStream.CopyToAsync(stream, range, ct, false);
                 }
-                catch (FtpException ex) when (IsNotFound(ex))
-                {
-                    throw new AssetNotFoundException(fileName, ex);
-                }
+            }
+            catch (FtpException ex) when (IsNotFound(ex))
+            {
+                throw new AssetNotFoundException(fileName, ex);
+            }
+            finally
+            {
+                pool.Return(client);
             }
         }
 
@@ -132,9 +145,14 @@ namespace Squidex.Assets
 
             var name = GetFileName(fileName, nameof(fileName));
 
-            using (var client = GetFtpClient())
+            var client = await GetClientAsync(ct);
+            try
             {
                 await UploadAsync(client, name, stream, overwrite, ct);
+            }
+            finally
+            {
+                pool.Return(client);
             }
         }
 
@@ -150,23 +168,47 @@ namespace Squidex.Assets
             await client.UploadAsync(stream, fileName, mode, true, null, ct);
         }
 
-        public async Task DeleteAsync(string fileName)
+        public async Task DeleteByPrefixAsync(string prefix, CancellationToken ct)
+        {
+            var name = GetFileName(prefix, nameof(prefix));
+
+            var client = await GetClientAsync(ct);
+            try
+            {
+                await client.DeleteDirectoryAsync(name, ct);
+            }
+            catch (FtpException ex)
+            {
+                if (!IsNotFound(ex))
+                {
+                    throw;
+                }
+            }
+            finally
+            {
+                pool.Return(client);
+            }
+        }
+
+        public async Task DeleteAsync(string fileName, CancellationToken ct)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
-            using (var client = GetFtpClient())
+            var client = await GetClientAsync(ct);
+            try
             {
-                try
+                await client.DeleteFileAsync(name, ct);
+            }
+            catch (FtpException ex)
+            {
+                if (!IsNotFound(ex))
                 {
-                    await client.DeleteFileAsync(name);
+                    throw;
                 }
-                catch (FtpException ex)
-                {
-                    if (!IsNotFound(ex))
-                    {
-                        throw;
-                    }
-                }
+            }
+            finally
+            {
+                pool.Return(client);
             }
         }
 
@@ -177,14 +219,28 @@ namespace Squidex.Assets
             return fileName.Replace("\\", "/");
         }
 
-        private IFtpClient GetFtpClient()
+        private async Task<IFtpClient> GetClientAsync(CancellationToken ct)
         {
-            var client = factory();
+            var (client, isNew) = await pool.GetClientAsync(ct);
+            try
+            {
+                if (!client.IsConnected)
+                {
+                    await client.AutoConnectAsync(ct);
+                }
 
-            client.Connect();
-            client.SetWorkingDirectory(path);
+                if (isNew)
+                {
+                    await client.SetWorkingDirectoryAsync(options.Path, ct);
+                }
 
-            return client;
+                return client;
+            }
+            catch
+            {
+                pool.Return(client);
+                throw;
+            }
         }
 
         private static bool IsNotFound(Exception exception)

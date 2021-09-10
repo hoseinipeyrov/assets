@@ -34,7 +34,12 @@ namespace Squidex.Assets
             throw new NotSupportedException();
         }
 
-        public Task DeleteAsync(string fileName)
+        public Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task DeleteAsync(string fileName, CancellationToken ct = default)
         {
             throw new NotSupportedException();
         }

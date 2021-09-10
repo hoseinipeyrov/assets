@@ -134,13 +134,45 @@ namespace Squidex.Assets
             }
         }
 
-        public Task DeleteAsync(string fileName)
+        public Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        {
+            var cleanedPrefix = GetFileName(prefix, nameof(prefix));
+
+            if (Delete(GetPath(prefix)))
+            {
+                return Task.CompletedTask;
+            }
+
+            foreach (var file in directory.GetFiles("*.*", SearchOption.AllDirectories))
+            {
+                var relativeName = GetFileName(Path.GetRelativePath(directory.FullName, file.FullName), string.Empty);
+
+                if (relativeName.StartsWith(cleanedPrefix, StringComparison.Ordinal))
+                {
+                    try
+                    {
+                        file.Delete();
+                    }
+                    catch (DirectoryNotFoundException)
+                    {
+                        continue;
+                    }
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteAsync(string fileName, CancellationToken ct = default)
         {
             try
             {
                 var file = GetFile(fileName, nameof(fileName));
 
-                file.Delete();
+                if (file.Exists)
+                {
+                    file.Delete();
+                }
 
                 return Task.CompletedTask;
             }
@@ -150,16 +182,37 @@ namespace Squidex.Assets
             }
         }
 
+        private bool Delete(string path)
+        {
+            try
+            {
+                Directory.Delete(path, true);
+
+                return true;
+            }
+            catch (DirectoryNotFoundException)
+            {
+                return false;
+            }
+        }
+
         private FileInfo GetFile(string fileName, string parameterName)
         {
-            Guard.NotNullOrEmpty(fileName, parameterName);
+            var cleaned = GetFileName(fileName, parameterName);
 
-            return new FileInfo(GetPath(fileName));
+            return new FileInfo(GetPath(cleaned));
         }
 
         private string GetPath(string name)
         {
             return Path.Combine(directory.FullName, name);
+        }
+
+        private static string GetFileName(string fileName, string parameterName)
+        {
+            Guard.NotNullOrEmpty(fileName, parameterName);
+
+            return fileName.Replace("\\", "/");
         }
     }
 }

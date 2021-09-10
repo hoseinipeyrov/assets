@@ -24,11 +24,12 @@ namespace Squidex.Assets
         private readonly string bucketName;
         private StorageClient storageClient;
 
-        public GoogleCloudAssetStore(string bucketName)
+        public GoogleCloudAssetStore(GoogleCloudAssetOptions options)
         {
-            Guard.NotNullOrEmpty(bucketName, nameof(bucketName));
+            Guard.NotNull(options, nameof(options));
+            Guard.NotNullOrEmpty(options.BucketName, nameof(options.BucketName));
 
-            this.bucketName = bucketName;
+            bucketName = options.BucketName;
         }
 
         public async Task InitializeAsync(CancellationToken ct = default)
@@ -120,13 +121,39 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DeleteAsync(string fileName)
+        public async Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        {
+            var name = GetFileName(prefix, nameof(prefix));
+
+            try
+            {
+                var items = storageClient.ListObjectsAsync(bucketName, name);
+
+                await foreach (var item in items)
+                {
+                    try
+                    {
+                        await storageClient.DeleteObjectAsync(item.Bucket, item.Name, cancellationToken: ct);
+                    }
+                    catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                    {
+                        continue;
+                    }
+                }
+            }
+            catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
+            {
+                return;
+            }
+        }
+
+        public async Task DeleteAsync(string fileName, CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
             try
             {
-                await storageClient.DeleteObjectAsync(bucketName, name);
+                await storageClient.DeleteObjectAsync(bucketName, name, cancellationToken: ct);
             }
             catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
             {

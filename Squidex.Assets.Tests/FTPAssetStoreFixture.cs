@@ -18,7 +18,10 @@ namespace Squidex.Assets
 
         public FTPAssetStoreFixture()
         {
-            AssetStore = new FTPAssetStore(() => new FtpClient("localhost", 21, "test", "test"), "assets", A.Fake<ILogger<FTPAssetStore>>());
+            AssetStore = new FTPAssetStore(() => new FtpClient("localhost", 21, "test", "test"), new FTPAssetOptions
+            {
+                Path = "assets"
+            }, A.Fake<ILogger<FTPAssetStore>>());
             AssetStore.InitializeAsync().Wait();
         }
 

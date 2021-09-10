@@ -7,6 +7,7 @@
 
 using System.Collections.Concurrent;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Squidex.Assets.Internal;
@@ -114,7 +115,19 @@ namespace Squidex.Assets
             }
         }
 
-        public virtual Task DeleteAsync(string fileName)
+        public virtual Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        {
+            Guard.NotNullOrEmpty(prefix, nameof(prefix));
+
+            foreach (var key in streams.Keys.Where(x => x.StartsWith(prefix, System.StringComparison.Ordinal)).ToList())
+            {
+                streams.TryRemove(key, out _);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public virtual Task DeleteAsync(string fileName, CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 

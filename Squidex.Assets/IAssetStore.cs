@@ -31,6 +31,8 @@ namespace Squidex.Assets
 
         Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default);
 
-        Task DeleteAsync(string fileName);
+        Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default);
+
+        Task DeleteAsync(string fileName, CancellationToken ct = default);
     }
 }
