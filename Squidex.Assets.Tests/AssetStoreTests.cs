@@ -333,6 +333,15 @@ namespace Squidex.Assets
         }
 
         [Fact]
+        public async Task Should_delete_by_prefix_name_if_asset_exists()
+        {
+            var name = Guid.NewGuid().ToString();
+
+            await Sut.UploadAndResetAsync(name, assetSmall);
+            await Sut.DeleteByPrefixAsync(name);
+        }
+
+        [Fact]
         public async Task Should_delete_folder_prefix()
         {
             var folder1 = Guid.NewGuid().ToString();

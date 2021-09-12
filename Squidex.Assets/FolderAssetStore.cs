@@ -190,7 +190,7 @@ namespace Squidex.Assets
 
                 return true;
             }
-            catch (DirectoryNotFoundException)
+            catch (IOException)
             {
                 return false;
             }
