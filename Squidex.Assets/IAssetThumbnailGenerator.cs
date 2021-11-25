@@ -6,16 +6,30 @@
 // ==========================================================================
 
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Squidex.Assets
 {
     public interface IAssetThumbnailGenerator
     {
-        Task<ImageInfo?> GetImageInfoAsync(Stream source);
+        bool CanRead(string mimeType)
+        {
+            return true;
+        }
 
-        Task<ImageInfo> FixOrientationAsync(Stream source, Stream destination);
+        bool CanWrite(string mimeType)
+        {
+            return true;
+        }
 
-        Task CreateThumbnailAsync(Stream source, Stream destination, ResizeOptions options);
+        Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
+            CancellationToken ct = default);
+
+        Task<ImageInfo> FixOrientationAsync(Stream source, string mimeType, Stream destination,
+            CancellationToken ct = default);
+
+        Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+            CancellationToken ct = default);
     }
 }

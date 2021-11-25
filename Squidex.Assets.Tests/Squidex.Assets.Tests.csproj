@@ -1,25 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-
+    <TargetFramework>net6.0</TargetFramework>
     <IsPackable>false</IsPackable>
-
     <RootNamespace>Squidex.Assets</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Images\feather.png" />
-    <None Remove="Images\logo-wide-rotated.jpg" />
+    <None Remove="Images\landscape.png" />
+    <None Remove="Images\logo-wide-rotated.jpeg" />
+    <None Remove="Images\logo.bmp" />
     <None Remove="Images\logo.gif" />
     <None Remove="Images\logo.jpeg" />
     <None Remove="Images\logo.png" />
     <None Remove="Images\logo.tga" />
+    <None Remove="Images\logo.tiff" />
+    <None Remove="Images\logo.webp" />
+    <None Remove="Images\sample.pdf" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FakeItEasy" Version="7.2.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <PrivateAssets>all</PrivateAssets>
@@ -39,11 +42,16 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Images\feather.png" />
-    <EmbeddedResource Include="Images\logo-wide-rotated.jpg" />
+    <EmbeddedResource Include="Images\landscape.png" />
+    <EmbeddedResource Include="Images\logo-wide-rotated.jpeg" />
+    <EmbeddedResource Include="Images\logo.bmp" />
     <EmbeddedResource Include="Images\logo.gif" />
     <EmbeddedResource Include="Images\logo.jpeg" />
     <EmbeddedResource Include="Images\logo.png" />
     <EmbeddedResource Include="Images\logo.tga" />
+    <EmbeddedResource Include="Images\logo.tiff" />
+    <EmbeddedResource Include="Images\logo.webp" />
+    <EmbeddedResource Include="Images\sample.pdf" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,16 +5,20 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Assets.ImageMagick;
+
 namespace Squidex.Assets
 {
-    public enum ImageFormat
+    public class MagicThumbnailGeneratorTests : AssetThumbnailGeneratorTests
     {
-        BMP,
-        GIF,
-        JPEG,
-        PNG,
-        TGA,
-        TIFF,
-        WEBP
+        protected override string Name()
+        {
+            return "magick";
+        }
+
+        protected override IAssetThumbnailGenerator CreateSut()
+        {
+            return new ImageMagickThumbnailGenerator();
+        }
     }
 }

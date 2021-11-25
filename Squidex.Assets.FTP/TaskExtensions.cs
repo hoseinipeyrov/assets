@@ -1,11 +1,19 @@
-﻿using System.Threading;
+﻿// ==========================================================================
+//  Squidex Headless CMS
+// ==========================================================================
+//  Copyright (c) Squidex UG (haftungsbeschraenkt)
+//  All rights reserved. Licensed under the MIT license.
+// ==========================================================================
+
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Squidex.Assets
 {
     public static class TaskExtensions
     {
-        public static Task<TResult> WaitAsync<TResult>(this Task<TResult> task, CancellationToken cancellationToken)
+        public static Task<TResult> WaitAsync<TResult>(this Task<TResult> task,
+            CancellationToken cancellationToken)
         {
             if (!cancellationToken.CanBeCanceled)
             {
@@ -20,7 +28,8 @@ namespace Squidex.Assets
             return DoWaitAsync(task, cancellationToken);
         }
 
-        private static async Task<TResult> DoWaitAsync<TResult>(Task<TResult> task, CancellationToken cancellationToken)
+        private static async Task<TResult> DoWaitAsync<TResult>(Task<TResult> task,
+            CancellationToken cancellationToken)
         {
             var tcs = new TaskCompletionSource<TResult>();
 

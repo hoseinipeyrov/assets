@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30406.217
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets", "Squidex.Assets\Squidex.Assets.csproj", "{0CDFF45E-8D92-4174-AC82-F2234D2B6203}"
 EndProject
@@ -15,7 +15,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.GoogleCloud"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.Azure", "Squidex.Assets.Azure\Squidex.Assets.Azure.csproj", "{A24EA56E-5050-42BD-805B-67AD2EAC6A2F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.Mongo", "Squidex.Assets.Mongo\Squidex.Assets.Mongo.csproj", "{AEBE3A75-D8F3-4236-BAF5-CC9B8A751E21}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.Mongo", "Squidex.Assets.Mongo\Squidex.Assets.Mongo.csproj", "{AEBE3A75-D8F3-4236-BAF5-CC9B8A751E21}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "Benchmarks\Benchmarks.csproj", "{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{AEBE3A75-D8F3-4236-BAF5-CC9B8A751E21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEBE3A75-D8F3-4236-BAF5-CC9B8A751E21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AEBE3A75-D8F3-4236-BAF5-CC9B8A751E21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -6,14 +6,16 @@
 // ==========================================================================
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Tga;
 using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 using SixLabors.ImageSharp.Processing;
@@ -23,11 +25,28 @@ using ISResizeOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
 namespace Squidex.Assets.ImageSharp
 {
-    public sealed class ImageSharpAssetThumbnailGenerator : IAssetThumbnailGenerator
+    public sealed class ImageSharpThumbnailGenerator : IAssetThumbnailGenerator
     {
         private readonly SemaphoreSlim maxTasks = new SemaphoreSlim(Math.Max(Environment.ProcessorCount / 4, 1));
+        private readonly HashSet<string> mimeTypes;
 
-        public async Task CreateThumbnailAsync(Stream source, Stream destination, ResizeOptions options)
+        public ImageSharpThumbnailGenerator()
+        {
+            mimeTypes = Configuration.Default.ImageFormatsManager.ImageFormats.SelectMany(x => x.MimeTypes).ToHashSet();
+        }
+
+        public bool CanRead(string mimeType)
+        {
+            return CanWrite(mimeType);
+        }
+
+        public bool CanWrite(string mimeType)
+        {
+            return mimeType != null && mimeTypes.Contains(mimeType);
+        }
+
+        public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+            CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
             Guard.NotNull(destination, nameof(destination));
@@ -36,20 +55,17 @@ namespace Squidex.Assets.ImageSharp
             if (!options.IsValid)
             {
                 await source.CopyToAsync(destination);
-
                 return;
             }
 
-            var w = options.Width ?? 0;
-            var h = options.Height ?? 0;
+            var w = options.TargetWidth ?? 0;
+            var h = options.TargetHeight ?? 0;
 
             await maxTasks.WaitAsync();
             try
             {
                 using (var image = Image.Load(source, out var format))
                 {
-                    var encoder = GetEncoder(options, format);
-
                     image.Mutate(x => x.AutoOrient());
 
                     if (w > 0 || h > 0)
@@ -96,6 +112,8 @@ namespace Squidex.Assets.ImageSharp
                         });
                     }
 
+                    var encoder = options.GetEncoder(format);
+
                     await image.SaveAsync(destination, encoder);
                 }
             }
@@ -105,68 +123,30 @@ namespace Squidex.Assets.ImageSharp
             }
         }
 
-        private static IImageEncoder GetEncoder(ResizeOptions options, IImageFormat? format)
-        {
-            var encoder = Configuration.Default.ImageFormatsManager.FindEncoder(format);
-
-            if (encoder == null)
-            {
-                throw new NotSupportedException();
-            }
-
-            if (options.Quality.HasValue && (encoder is JpegEncoder || !options.KeepFormat) && options.Format == ImageFormat.Auto)
-            {
-                encoder = new JpegEncoder { Quality = options.Quality.Value };
-            }
-            else if (options.Format == ImageFormat.JPEG)
-            {
-                encoder = new JpegEncoder();
-            }
-            else if (options.Format == ImageFormat.TGA)
-            {
-                encoder = new TgaEncoder();
-            }
-            else if (options.Format == ImageFormat.GIF)
-            {
-                encoder = new GifEncoder();
-            }
-            else if (options.Format == ImageFormat.PNG || encoder is PngEncoder)
-            {
-                encoder = new PngEncoder
-                {
-                    ColorType = PngColorType.RgbWithAlpha
-                };
-            }
-
-            return encoder;
-        }
-
-        public Task<ImageInfo?> GetImageInfoAsync(Stream source)
+        public Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
+            CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
 
-            ImageInfo? result = null;
+            return Task.FromResult(GetImageInfo(source));
+        }
 
+        private static ImageInfo? GetImageInfo(Stream source)
+        {
             try
             {
                 var image = Image.Identify(source, out var format);
 
-                if (image != null)
-                {
-                    result = GetImageInfo(image);
-
-                    result.Format = format.Name;
-                }
+                return image != null ? GetImageInfo(image, format!) : null;
             }
             catch
             {
-                result = null;
+                return null;
             }
-
-            return Task.FromResult(result);
         }
 
-        public async Task<ImageInfo> FixOrientationAsync(Stream source, Stream destination)
+        public async Task<ImageInfo> FixOrientationAsync(Stream source, string mimeType, Stream destination,
+            CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
             Guard.NotNull(destination, nameof(destination));
@@ -187,7 +167,7 @@ namespace Squidex.Assets.ImageSharp
 
                     await image.SaveAsync(destination, encoder);
 
-                    return GetImageInfo(image);
+                    return GetImageInfo(image, format);
                 }
             }
             finally
@@ -196,18 +176,32 @@ namespace Squidex.Assets.ImageSharp
             }
         }
 
-        private static ImageInfo GetImageInfo(IImageInfo image)
+        private static ImageInfo GetImageInfo(IImageInfo image, IImageFormat? detectedFormat)
         {
-            var isRotatedOrSwapped = false;
+            var isRotatedOrSwapped = image.Metadata.ExifProfile?.GetValue(ExifTag.Orientation)?.Value > 1;
 
-            if (image.Metadata.ExifProfile != null)
+            var format = ImageFormat.PNG;
+
+            switch (detectedFormat)
             {
-                var value = image.Metadata.ExifProfile.GetValue(ExifTag.Orientation);
-
-                isRotatedOrSwapped = value?.Value > 1;
+                case BmpFormat:
+                    format = ImageFormat.BMP;
+                    break;
+                case JpegFormat:
+                    format = ImageFormat.JPEG;
+                    break;
+                case TgaFormat:
+                    format = ImageFormat.TGA;
+                    break;
+                case GifFormat:
+                    format = ImageFormat.GIF;
+                    break;
             }
 
-            return new ImageInfo(image.Width, image.Height, isRotatedOrSwapped);
+            return new ImageInfo(image.Width, image.Height, isRotatedOrSwapped, format)
+            {
+                Format = format
+            };
         }
     }
 }
