@@ -137,7 +137,12 @@ namespace Squidex.Assets.ImageSharp
             {
                 var image = Image.Identify(source, out var format);
 
-                return image != null ? GetImageInfo(image, format!) : null;
+                if (image == null || format == null)
+                {
+                    return null;
+                }
+
+                return GetImageInfo(image, format);
             }
             catch
             {

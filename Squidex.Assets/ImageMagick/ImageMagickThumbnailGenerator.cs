@@ -22,7 +22,7 @@ namespace Squidex.Assets.ImageMagick
 {
     public sealed class ImageMagickThumbnailGenerator : IAssetThumbnailGenerator
     {
-        public Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+        public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
@@ -31,8 +31,8 @@ namespace Squidex.Assets.ImageMagick
 
             if (!options.IsValid)
             {
-                source.CopyTo(destination);
-                return Task.CompletedTask;
+                await source.CopyToAsync(destination, ct);
+                return;
             }
 
             var w = options.TargetWidth ?? 0;
@@ -40,7 +40,7 @@ namespace Squidex.Assets.ImageMagick
 
             using (var collection = new MagickImageCollection())
             {
-                collection.Read(source);
+                await collection.ReadAsync(source, GetFormat(mimeType), ct);
 
                 collection.Coalesce();
 
@@ -108,10 +108,8 @@ namespace Squidex.Assets.ImageMagick
 
                 var targetFormat = options.GetFormat(firstFormat);
 
-                collection.Write(destination, targetFormat);
+                await collection.WriteAsync(destination, targetFormat, ct);
             }
-
-            return Task.CompletedTask;
         }
 
         public async Task<ImageInfo> FixOrientationAsync(Stream source, string mimeType, Stream destination,
@@ -122,7 +120,7 @@ namespace Squidex.Assets.ImageMagick
 
             using (var collection = new MagickImageCollection())
             {
-                await collection.ReadAsync(source, ct);
+                await collection.ReadAsync(source, GetFormat(mimeType), ct);
 
                 collection.Coalesce();
 
@@ -153,70 +151,38 @@ namespace Squidex.Assets.ImageMagick
 
         private static ImageInfo? GetImageInfo(Stream source, string mimeType)
         {
-            var extension = mimeType.Split('/').Last();
-
-            ImageFile? imageFile;
             try
             {
-                using (var file = Create(new StreamFileAbstraction(source, extension), mimeType, ReadStyle.Average))
+                using (var image = new MagickImage())
                 {
-                    imageFile = file as ImageFile;
+                    image.Ping(source, new MagickReadSettings
+                    {
+                        Format = GetFormat(mimeType)
+                    });
+
+                    return new ImageInfo(
+                        image.Width,
+                        image.Height,
+                        image.Orientation > OrientationType.TopLeft,
+                        image.Format.ToImageFormat());
                 }
-            }
-            catch (UnsupportedFormatException)
-            {
-                imageFile = null;
-            }
-
-            if (imageFile == null ||
-                imageFile.Properties == null ||
-                imageFile.Properties.PhotoWidth <= 0 ||
-                imageFile.Properties.PhotoHeight <= 0)
-            {
-                return GetImageInfoFallback(source);
-            }
-
-            var format = ImageFormat.PNG;
-
-            if (Enum.TryParse<ImageFormat>(imageFile.TagTypesOnDisk.ToString(), true, out var parsed))
-            {
-                format = parsed;
-            }
-            else if (Enum.TryParse(extension, true, out parsed))
-            {
-                format = parsed;
-            }
-
-            return new ImageInfo(
-                imageFile.Properties.PhotoWidth,
-                imageFile.Properties.PhotoHeight,
-                imageFile.GetOrientation() > ImageOrientation.TopLeft,
-                format);
-        }
-
-        private static ImageInfo? GetImageInfoFallback(Stream source)
-        {
-            if (source.Position > 0 && !source.CanSeek)
-            {
-                return null;
-            }
-
-            source.Position = 0;
-
-            try
-            {
-                var image = new MagickImageInfo(source);
-
-                return new ImageInfo(
-                    image.Width,
-                    image.Height,
-                    false,
-                    image.Format.ToImageFormat());
             }
             catch
             {
                 return null;
             }
+        }
+
+        private static MagickFormat GetFormat(string mimeType)
+        {
+            var format = MagickFormat.Unknown;
+
+            if (string.Equals(mimeType, "image/x-tga"))
+            {
+                format = MagickFormat.Tga;
+            }
+
+            return format;
         }
     }
 }

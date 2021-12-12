@@ -74,7 +74,7 @@ namespace Squidex.Assets
 
                 target.Position = 0;
 
-                var imageInfo = await sut.GetImageInfoAsync(target, $"image/{targetFormat.ToString().ToLowerInvariant()}");
+                var imageInfo = await sut.GetImageInfoAsync(target, targetFormat.ToMimeType());
 
                 Assert.Equal(targetFormat, imageInfo?.Format);
             }
@@ -403,9 +403,23 @@ namespace Squidex.Assets
         {
             var name = $"Squidex.Assets.Images.{fileName}";
 
-            var mimeType = $"image/{fileName.Split('.').Last()}";
+            var mimeType = GetMimeType(fileName);
 
             return (mimeType, GetType().Assembly.GetManifestResourceStream(name)!);
+        }
+
+        private static string GetMimeType(string fileName)
+        {
+            var extension = fileName.Split('.').Last();
+
+            var mimeType = $"image/{extension}";
+
+            if (string.Equals(extension, "tga"))
+            {
+                mimeType = "image/x-tga";
+            }
+
+            return mimeType;
         }
 
         private (string, Stream) GetImage(ImageFormat format)
