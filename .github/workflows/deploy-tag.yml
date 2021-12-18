@@ -54,9 +54,9 @@ jobs:
 
     - name: Rename Tags
       run: |
-        docker tag resizer-tmp squidex/resizer:latest
-        docker tag resizer-tmp squidex/resizer:${{ env.GITHUB_REF_SLUG }}
-        docker tag resizer-tmp squidex/resizer:${{ steps.version.outputs._0 }}
+        docker tag resizer-temp squidex/resizer:latest
+        docker tag resizer-temp squidex/resizer:${{ env.GITHUB_REF_SLUG }}
+        docker tag resizer-temp squidex/resizer:${{ steps.version.outputs._0 }}
 
     - name: Push Tags
       run: |
