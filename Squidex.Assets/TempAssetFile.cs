@@ -43,16 +43,36 @@ namespace Squidex.Assets
 
         public Stream OpenWrite()
         {
-            stream.Position = 0;
-
-            return stream;
+            return new NonDisposingStream(stream);
         }
 
         public override Stream OpenRead()
         {
-            stream.Position = 0;
+            return new NonDisposingStream(stream);
+        }
 
-            return stream;
+        private sealed class NonDisposingStream : DelegatingStream
+        {
+            public NonDisposingStream(Stream inner)
+                : base(inner)
+            {
+                inner.Position = 0;
+            }
+
+            public override void Close()
+            {
+                Flush();
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                Flush();
+            }
+
+            public override async ValueTask DisposeAsync()
+            {
+                await FlushAsync();
+            }
         }
     }
 }
