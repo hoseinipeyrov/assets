@@ -23,8 +23,9 @@ jobs:
         string: '${{ env.GITHUB_REF_SLUG }}'
         split-by: '.'
 
-    - run: | 
-        echo "Major Version: ${{ steps.version.outputs._0}}"
+    - name: Print Major Version
+      run: | 
+        echo "Major Version: ${{ steps.version.outputs._0 }} for ${{ env.GITHUB_REF_SLUG }}"
 
     - name: Cache Docker layers
       uses: actions/cache@v2
