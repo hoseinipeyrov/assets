@@ -87,7 +87,7 @@ namespace Squidex.Assets.ResizeService
             }
         }
 
-        private Stream GetTempStream()
+        private static Stream GetTempStream()
         {
             var tempPath = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
 

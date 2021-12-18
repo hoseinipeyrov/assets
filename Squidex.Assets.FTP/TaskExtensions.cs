@@ -33,7 +33,7 @@ namespace Squidex.Assets
         {
             var tcs = new TaskCompletionSource<TResult>();
 
-            using (cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken), false))
+            await using (cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken), false))
             {
                 var inner = await Task.WhenAny(task, tcs.Task).ConfigureAwait(false);
 

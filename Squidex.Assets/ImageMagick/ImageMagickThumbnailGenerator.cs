@@ -81,13 +81,14 @@ namespace Squidex.Assets.ImageMagick
                         clone.Resize(sourceRectangle);
 
                         image.Extent(size.Width, size.Height);
-                        image.Clear(color);
+
+                        image.CompositeClear(color);
                         image.Composite(clone, pad.X, pad.Y, CompositeOperator.Over);
                     }
                     else
                     {
-                        image.Clear(color);
-                        image.Composite(clone);
+                        image.CompositeClear(color);
+                        image.Composite(clone, 0, 0, CompositeOperator.Over);
                     }
 
                     image.AutoOrient();

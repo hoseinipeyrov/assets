@@ -12,7 +12,7 @@ namespace Squidex.Assets.ImageMagick
 {
     internal static class ImageMagickExtensions
     {
-        public static MagickColor ParseColor(this ResizeOptions options)
+        public static MagickColor? ParseColor(this ResizeOptions options)
         {
             if (string.IsNullOrWhiteSpace(options.Background))
             {
@@ -29,7 +29,7 @@ namespace Squidex.Assets.ImageMagick
             }
         }
 
-        public static void Clear(this IMagickImage<byte> image, MagickColor color)
+        public static void CompositeClear(this IMagickImage<byte> image, MagickColor color)
         {
             const int BufferSize = 50;
 

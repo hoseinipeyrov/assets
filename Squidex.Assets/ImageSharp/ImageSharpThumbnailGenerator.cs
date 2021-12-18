@@ -95,15 +95,15 @@ namespace Squidex.Assets.ImageSharp
 
                     image.Mutate(operation =>
                     {
-                        operation = operation.Resize(resizeOptions);
+                        operation.Resize(resizeOptions);
 
                         if (Color.TryParse(options.Background, out var color))
                         {
-                            operation = operation.BackgroundColor(color);
+                             operation.BackgroundColor(color);
                         }
                         else
                         {
-                            operation = operation.BackgroundColor(Color.Transparent);
+                            operation.BackgroundColor(Color.Transparent);
                         }
                     });
                 }

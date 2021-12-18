@@ -190,7 +190,7 @@ namespace Squidex.Assets
             }
         }
 
-        private bool Delete(string path)
+        private static bool Delete(string path)
         {
             try
             {

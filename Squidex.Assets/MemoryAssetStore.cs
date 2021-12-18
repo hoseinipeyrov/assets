@@ -125,7 +125,7 @@ namespace Squidex.Assets
         {
             Guard.NotNullOrEmpty(prefix, nameof(prefix));
 
-            foreach (var key in streams.Keys.Where(x => x.StartsWith(prefix, System.StringComparison.Ordinal)).ToList())
+            foreach (var key in streams.Keys.Where(x => x.StartsWith(prefix, StringComparison.Ordinal)).ToList())
             {
                 streams.TryRemove(key, out _);
             }

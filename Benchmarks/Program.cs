@@ -70,9 +70,9 @@ namespace Benchmarks
             {
                 var generator = new ImageSharpThumbnailGenerator();
 
-                using (var source = new FileStream("file_example_PNG_1MB.png", FileMode.Open))
+                await using (var source = new FileStream("file_example_PNG_1MB.png", FileMode.Open))
                 {
-                    using (var destination = new FileStream("resized.png", FileMode.Create))
+                    await using (var destination = new FileStream("resized.png", FileMode.Create))
                     {
                         await generator.CreateThumbnailAsync(source, "image/png", destination, new ResizeOptions
                         {

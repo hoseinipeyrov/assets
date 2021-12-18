@@ -90,7 +90,7 @@ namespace Squidex.Assets
             {
                 var options = range.IsDefined ? DownloadSeekable : DownloadDefault;
 
-                using (var readStream = await bucket.OpenDownloadStreamAsync(name, options, ct))
+                await using (var readStream = await bucket.OpenDownloadStreamAsync(name, options, ct))
                 {
                     await readStream.CopyToAsync(stream, range, ct);
                 }
