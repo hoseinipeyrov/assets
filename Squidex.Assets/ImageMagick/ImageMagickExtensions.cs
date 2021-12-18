@@ -12,7 +12,7 @@ namespace Squidex.Assets.ImageMagick
 {
     internal static class ImageMagickExtensions
     {
-        public static MagickColor? ParseColor(this ResizeOptions options)
+        public static MagickColor ParseColor(this ResizeOptions options)
         {
             if (string.IsNullOrWhiteSpace(options.Background))
             {
