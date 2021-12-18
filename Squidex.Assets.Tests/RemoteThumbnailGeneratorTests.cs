@@ -39,7 +39,7 @@ namespace Squidex.Assets
                 new ServiceCollection()
                 .AddHttpClient("Resize", options =>
                 {
-                    options.BaseAddress = new Uri("http://localhost:5005");
+                    options.BaseAddress = new Uri("https://squidex-resizer-public-ylxt3nzaaq-ew.a.run.app/");
                 }).Services
                 .BuildServiceProvider();
 

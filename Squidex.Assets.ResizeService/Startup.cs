@@ -7,7 +7,6 @@
 
 using Squidex.Assets.ImageMagick;
 using Squidex.Assets.ImageSharp;
-using Squidex.Log;
 
 namespace Squidex.Assets.ResizeService
 {
@@ -22,6 +21,8 @@ namespace Squidex.Assets.ResizeService
 
         public void ConfigureServices(IServiceCollection services)
         {
+            var options = configuration.GetSection("images").Get<ImageResizeOptions>();
+
             services.AddHealthChecks();
             services.AddDefaultForwardRules();
             services.AddDefaultWebServices(configuration);
@@ -31,7 +32,7 @@ namespace Squidex.Assets.ResizeService
             {
                 new ImageSharpThumbnailGenerator(),
                 new ImageMagickThumbnailGenerator()
-            })).As<IAssetThumbnailGenerator>();
+            }, options.MaxTasks)).As<IAssetThumbnailGenerator>();
         }
 
         public void Configure(IApplicationBuilder app)
