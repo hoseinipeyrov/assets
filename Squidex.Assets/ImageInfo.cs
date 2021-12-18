@@ -19,6 +19,7 @@ namespace Squidex.Assets
 
         public ImageOrientation Orientation { get; }
 
+
         public ImageInfo(int pixelWidth, int pixelHeight, ImageOrientation orientation, ImageFormat format)
         {
             Guard.GreaterThan(pixelWidth, 0, nameof(pixelWidth));

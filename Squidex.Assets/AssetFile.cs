@@ -7,11 +7,12 @@
 
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
-    public abstract class AssetFile : IDisposable
+    public abstract class AssetFile : IDisposable, IAsyncDisposable
     {
         public string FileName { get; }
 
@@ -33,6 +34,11 @@ namespace Squidex.Assets
 
         public virtual void Dispose()
         {
+        }
+
+        public virtual ValueTask DisposeAsync()
+        {
+            return default;
         }
 
         public abstract Stream OpenRead();
