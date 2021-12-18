@@ -23,16 +23,22 @@ namespace Squidex.Assets
             return Task.CompletedTask;
         }
 
-        Task<long> GetSizeAsync(string fileName, CancellationToken ct = default);
+        Task<long> GetSizeAsync(string fileName,
+            CancellationToken ct = default);
 
-        Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default);
+        Task CopyAsync(string sourceFileName, string targetFileName,
+            CancellationToken ct = default);
 
-        Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default);
+        Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
+            CancellationToken ct = default);
 
-        Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default);
+        Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+            CancellationToken ct = default);
 
-        Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default);
+        Task DeleteByPrefixAsync(string prefix,
+            CancellationToken ct = default);
 
-        Task DeleteAsync(string fileName, CancellationToken ct = default);
+        Task DeleteAsync(string fileName,
+            CancellationToken ct = default);
     }
 }

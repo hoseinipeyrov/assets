@@ -21,7 +21,7 @@ namespace Squidex.Assets
         public FolderAssetStoreFixture()
         {
             AssetStore = new FolderAssetStore(TestFolder, A.Dummy<ILogger<FolderAssetStore>>());
-            AssetStore.InitializeAsync().Wait();
+            AssetStore.InitializeAsync(default).Wait();
         }
 
         public void Dispose()

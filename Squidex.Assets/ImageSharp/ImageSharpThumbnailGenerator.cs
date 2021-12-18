@@ -27,7 +27,6 @@ namespace Squidex.Assets.ImageSharp
 {
     public sealed class ImageSharpThumbnailGenerator : IAssetThumbnailGenerator
     {
-        private readonly SemaphoreSlim maxTasks = new SemaphoreSlim(Math.Max(Environment.ProcessorCount / 4, 1));
         private readonly HashSet<string> mimeTypes;
 
         public ImageSharpThumbnailGenerator()
@@ -54,88 +53,75 @@ namespace Squidex.Assets.ImageSharp
 
             if (!options.IsValid)
             {
-                await source.CopyToAsync(destination);
+                await source.CopyToAsync(destination, ct);
                 return;
             }
 
             var w = options.TargetWidth ?? 0;
             var h = options.TargetHeight ?? 0;
 
-            await maxTasks.WaitAsync();
-            try
+            using (var image = Image.Load(source, out var format))
             {
-                using (var image = Image.Load(source, out var format))
+                image.Mutate(x => x.AutoOrient());
+
+                if (w > 0 || h > 0)
                 {
-                    image.Mutate(x => x.AutoOrient());
+                    var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
 
-                    if (w > 0 || h > 0)
+                    if (!Enum.TryParse<ISResizeMode>(options.Mode.ToString(), true, out var resizeMode))
                     {
-                        var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
-
-                        if (!Enum.TryParse<ISResizeMode>(options.Mode.ToString(), true, out var resizeMode))
-                        {
-                            resizeMode = ISResizeMode.Max;
-                        }
-
-                        if (isCropUpsize)
-                        {
-                            resizeMode = ISResizeMode.Crop;
-                        }
-
-                        if (w >= image.Width && h >= image.Height && resizeMode == ISResizeMode.Crop && !isCropUpsize)
-                        {
-                            resizeMode = ISResizeMode.BoxPad;
-                        }
-
-                        var resizeOptions = new ISResizeOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true };
-
-                        if (options.FocusX.HasValue && options.FocusY.HasValue)
-                        {
-                            resizeOptions.CenterCoordinates = new PointF(
-                                +(options.FocusX.Value / 2f) + 0.5f,
-                                -(options.FocusY.Value / 2f) + 0.5f
-                            );
-                        }
-
-                        image.Mutate(operation =>
-                        {
-                            operation = operation.Resize(resizeOptions);
-
-                            if (Color.TryParse(options.Background, out var color))
-                            {
-                                operation = operation.BackgroundColor(color);
-                            }
-                            else
-                            {
-                                operation = operation.BackgroundColor(Color.Transparent);
-                            }
-                        });
+                        resizeMode = ISResizeMode.Max;
                     }
 
-                    var encoder = options.GetEncoder(format);
+                    if (isCropUpsize)
+                    {
+                        resizeMode = ISResizeMode.Crop;
+                    }
 
-                    await image.SaveAsync(destination, encoder);
+                    if (w >= image.Width && h >= image.Height && resizeMode == ISResizeMode.Crop && !isCropUpsize)
+                    {
+                        resizeMode = ISResizeMode.BoxPad;
+                    }
+
+                    var resizeOptions = new ISResizeOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true };
+
+                    if (options.FocusX.HasValue && options.FocusY.HasValue)
+                    {
+                        resizeOptions.CenterCoordinates = new PointF(
+                            +(options.FocusX.Value / 2f) + 0.5f,
+                            -(options.FocusY.Value / 2f) + 0.5f
+                        );
+                    }
+
+                    image.Mutate(operation =>
+                    {
+                        operation = operation.Resize(resizeOptions);
+
+                        if (Color.TryParse(options.Background, out var color))
+                        {
+                            operation = operation.BackgroundColor(color);
+                        }
+                        else
+                        {
+                            operation = operation.BackgroundColor(Color.Transparent);
+                        }
+                    });
                 }
-            }
-            finally
-            {
-                maxTasks.Release();
+
+                var encoder = options.GetEncoder(format);
+
+                await image.SaveAsync(destination, encoder, ct);
             }
         }
 
-        public Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
+        public async Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
 
-            return Task.FromResult(GetImageInfo(source));
-        }
-
-        private static ImageInfo? GetImageInfo(Stream source)
-        {
             try
             {
-                var image = Image.Identify(source, out var format);
+                var (image, format) = await Image.IdentifyWithFormatAsync(source, ct);
 
                 if (image == null || format == null)
                 {
@@ -150,40 +136,30 @@ namespace Squidex.Assets.ImageSharp
             }
         }
 
-        public async Task<ImageInfo> FixOrientationAsync(Stream source, string mimeType, Stream destination,
+        public async Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
             Guard.NotNull(destination, nameof(destination));
 
-            await maxTasks.WaitAsync();
-            try
+            using (var image = Image.Load(source, out var format))
             {
-                using (var image = Image.Load(source, out var format))
+                var encoder = Configuration.Default.ImageFormatsManager.FindEncoder(format);
+
+                if (encoder == null)
                 {
-                    var encoder = Configuration.Default.ImageFormatsManager.FindEncoder(format);
-
-                    if (encoder == null)
-                    {
-                        throw new NotSupportedException();
-                    }
-
-                    image.Mutate(x => x.AutoOrient());
-
-                    await image.SaveAsync(destination, encoder);
-
-                    return GetImageInfo(image, format);
+                    throw new NotSupportedException();
                 }
-            }
-            finally
-            {
-                maxTasks.Release();
+
+                image.Mutate(x => x.AutoOrient());
+
+                await image.SaveAsync(destination, encoder, ct);
             }
         }
 
         private static ImageInfo GetImageInfo(IImageInfo image, IImageFormat? detectedFormat)
         {
-            var isRotatedOrSwapped = image.Metadata.ExifProfile?.GetValue(ExifTag.Orientation)?.Value > 1;
+            var orientation = (ImageOrientation)(image.Metadata.ExifProfile?.GetValue(ExifTag.Orientation)?.Value ?? 0);
 
             var format = ImageFormat.PNG;
 
@@ -203,7 +179,7 @@ namespace Squidex.Assets.ImageSharp
                     break;
             }
 
-            return new ImageInfo(image.Width, image.Height, isRotatedOrSwapped, format)
+            return new ImageInfo(image.Width, image.Height, orientation, format)
             {
                 Format = format
             };

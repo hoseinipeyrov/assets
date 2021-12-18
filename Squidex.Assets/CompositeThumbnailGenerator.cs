@@ -44,7 +44,7 @@ namespace Squidex.Assets
         public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
-            await maxTasks.WaitAsync();
+            await maxTasks.WaitAsync(ct);
             try
             {
                 var destinationMimeTime = mimeType;
@@ -71,17 +71,18 @@ namespace Squidex.Assets
             await source.CopyToAsync(destination, ct);
         }
 
-        public async Task<ImageInfo> FixOrientationAsync(Stream source, string mimeType, Stream destination,
+        public async Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default)
         {
-            await maxTasks.WaitAsync();
+            await maxTasks.WaitAsync(ct);
             try
             {
                 foreach (var inner in inners)
                 {
                     if (inner.CanRead(mimeType) && inner.CanRead(mimeType))
                     {
-                        return await inner.FixOrientationAsync(source, mimeType, destination, ct);
+                        await inner.FixOrientationAsync(source, mimeType, destination, ct);
+                        return;
                     }
                 }
             }

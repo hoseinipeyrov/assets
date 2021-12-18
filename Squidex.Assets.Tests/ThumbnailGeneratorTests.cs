@@ -39,7 +39,9 @@ namespace Squidex.Assets
         protected AssetThumbnailGeneratorTests()
         {
 #pragma warning disable RECS0021 // Warns about calls to virtual member functions occuring in the constructor
+#pragma warning disable MA0056 // Do not call overridable members in constructor
             sut = CreateSut();
+#pragma warning restore MA0056 // Do not call overridable members in constructor
 #pragma warning restore RECS0021 // Warns about calls to virtual member functions occuring in the constructor
         }
 
@@ -65,7 +67,7 @@ namespace Squidex.Assets
 
             var (mimeType, source) = GetImage(sourceFormat);
 
-            using (var target = GetStream($"transform.{sourceFormat.ToString().ToLowerInvariant()}", targetFormat.ToString().ToLowerInvariant()))
+            await using (var target = GetStream($"transform.{sourceFormat.ToString().ToLowerInvariant()}", targetFormat.ToString().ToLowerInvariant()))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -85,7 +87,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage(ImageFormat.PNG);
 
-            using (var target = GetStream("resize-copy"))
+            await using (var target = GetStream("resize-copy"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions());
 
@@ -98,7 +100,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage(ImageFormat.PNG);
 
-            using (var target = GetStream("upsize"))
+            await using (var target = GetStream("upsize"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -116,7 +118,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage(ImageFormat.PNG);
 
-            using (var target = GetStream("downsize"))
+            await using (var target = GetStream("downsize"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -134,7 +136,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage(ImageFormat.JPEG);
 
-            using (var target = GetStream("quality", "jpg"))
+            await using (var target = GetStream("quality", "jpg"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -150,7 +152,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage(ImageFormat.PNG);
 
-            using (var target = GetStream("quality", "png"))
+            await using (var target = GetStream("quality", "png"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -189,7 +191,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage("logo.png");
 
-            using (var target = GetStream(name))
+            await using (var target = GetStream(name))
             {
                 const int w = 1500;
                 const int h = 1500;
@@ -204,7 +206,7 @@ namespace Squidex.Assets
 
                 target.Position = 0;
 
-                var image = Image.Load<Rgba32>(target);
+                var image = await Image.LoadAsync<Rgba32>(target);
 
                 Assert.Equal(w, image.Width);
                 Assert.Equal(h, image.Height);
@@ -223,14 +225,18 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetRotatedJpeg();
 
-            using (var target = GetStream("oriented", "jpeg"))
+            await using (var target = GetStream("oriented", "jpeg"))
             {
-                var imageInfo = await sut.FixOrientationAsync(source, mimeType, target);
+                await sut.FixOrientationAsync(source, mimeType, target);
+
+                target.Position = 0;
+
+                var imageInfo = await sut.GetImageInfoAsync(target, mimeType);
 
                 Assert.Equal(135, imageInfo.PixelHeight);
                 Assert.Equal(600, imageInfo.PixelWidth);
 
-                Assert.False(imageInfo.IsRotatedOrSwapped);
+                Assert.Equal(ImageOrientation.TopLeft, imageInfo.Orientation);
             }
         }
 
@@ -239,7 +245,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage("landscape.png");
 
-            using (var target = GetStream("landscape.stretch"))
+            await using (var target = GetStream("landscape.stretch"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -255,7 +261,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage("landscape.png");
 
-            using (var target = GetStream("landscape.max"))
+            await using (var target = GetStream("landscape.max"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -271,7 +277,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage("landscape.png");
 
-            using (var target = GetStream("landscape.min"))
+            await using (var target = GetStream("landscape.min"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -287,7 +293,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage("landscape.png");
 
-            using (var target = GetStream("landscape.boxpad"))
+            await using (var target = GetStream("landscape.boxpad"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -303,7 +309,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage("landscape.png");
 
-            using (var target = GetStream("landscape.crop"))
+            await using (var target = GetStream("landscape.crop"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -319,7 +325,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage("landscape.png");
 
-            using (var target = GetStream("landscape.cropup"))
+            await using (var target = GetStream("landscape.cropup"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -335,7 +341,7 @@ namespace Squidex.Assets
         {
             var (mimeType, source) = GetImage("landscape.png");
 
-            using (var target = GetStream("landscape.pad"))
+            await using (var target = GetStream("landscape.pad"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
                 {
@@ -356,7 +362,7 @@ namespace Squidex.Assets
             Assert.Equal(600, imageInfo!.PixelHeight);
             Assert.Equal(600, imageInfo!.PixelWidth);
 
-            Assert.False(imageInfo.IsRotatedOrSwapped);
+            Assert.Equal(ImageOrientation.None, imageInfo.Orientation);
         }
 
         [Fact]
@@ -369,7 +375,7 @@ namespace Squidex.Assets
             Assert.Equal(600, imageInfo!.PixelHeight);
             Assert.Equal(135, imageInfo!.PixelWidth);
 
-            Assert.True(imageInfo.IsRotatedOrSwapped);
+            Assert.Equal(ImageOrientation.LeftBottom, imageInfo.Orientation);
         }
 
         [Fact]
@@ -410,11 +416,11 @@ namespace Squidex.Assets
 
         private static string GetMimeType(string fileName)
         {
-            var extension = fileName.Split('.').Last();
+            var extension = fileName.Split('.')[^1];
 
             var mimeType = $"image/{extension}";
 
-            if (string.Equals(extension, "tga"))
+            if (string.Equals(extension, "tga", StringComparison.OrdinalIgnoreCase))
             {
                 mimeType = "image/x-tga";
             }

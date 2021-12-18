@@ -32,7 +32,7 @@ namespace Squidex.Assets
         [Fact]
         public void Should_throw_when_creating_directory_failed()
         {
-            Assert.Throws<AssetStoreException>(() => new FolderAssetStore(CreateInvalidPath(), A.Dummy<ILogger<FolderAssetStore>>()).InitializeAsync().Wait());
+            Assert.Throws<AssetStoreException>(() => new FolderAssetStore(CreateInvalidPath(), A.Dummy<ILogger<FolderAssetStore>>()).InitializeAsync(default).Wait());
         }
 
         [Fact]

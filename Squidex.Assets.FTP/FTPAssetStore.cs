@@ -36,7 +36,7 @@ namespace Squidex.Assets
             this.log = log;
         }
 
-        public async Task InitializeAsync(CancellationToken ct = default)
+        public async Task InitializeAsync(CancellationToken ct)
         {
             var client = await GetClientAsync(ct);
             try
@@ -54,7 +54,8 @@ namespace Squidex.Assets
             log.LogInformation("Initialized with {path}", options.Path);
         }
 
-        public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
+        public async Task<long> GetSizeAsync(string fileName,
+            CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -80,7 +81,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
+        public async Task CopyAsync(string sourceFileName, string targetFileName,
+            CancellationToken ct = default)
         {
             var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
             var targetName = GetFileName(targetFileName, nameof(targetFileName));
@@ -90,7 +92,7 @@ namespace Squidex.Assets
             {
                 var tempPath = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
 
-                using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose))
+                await using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose))
                 {
                     try
                     {
@@ -115,7 +117,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
+        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -124,7 +127,7 @@ namespace Squidex.Assets
             var client = await GetClientAsync(ct);
             try
             {
-                using (var ftpStream = await client.OpenReadAsync(name, range.From ?? 0, ct))
+                await using (var ftpStream = await client.OpenReadAsync(name, range.From ?? 0, ct))
                 {
                     await ftpStream.CopyToAsync(stream, range, ct, false);
                 }
@@ -139,7 +142,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
+        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -156,7 +160,8 @@ namespace Squidex.Assets
             }
         }
 
-        private static async Task UploadAsync(IFtpClient client, string fileName, Stream stream, bool overwrite, CancellationToken ct)
+        private static async Task UploadAsync(IFtpClient client, string fileName, Stream stream, bool overwrite,
+            CancellationToken ct)
         {
             if (!overwrite && await client.FileExistsAsync(fileName, ct))
             {
@@ -168,7 +173,8 @@ namespace Squidex.Assets
             await client.UploadAsync(stream, fileName, mode, true, null, ct);
         }
 
-        public async Task DeleteByPrefixAsync(string prefix, CancellationToken ct)
+        public async Task DeleteByPrefixAsync(string prefix,
+            CancellationToken ct = default)
         {
             var name = GetFileName(prefix, nameof(prefix));
 
@@ -190,7 +196,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DeleteAsync(string fileName, CancellationToken ct)
+        public async Task DeleteAsync(string fileName,
+            CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -216,7 +223,7 @@ namespace Squidex.Assets
         {
             Guard.NotNullOrEmpty(fileName, parameterName);
 
-            return fileName.Replace("\\", "/");
+            return fileName.Replace("\\", "/", StringComparison.Ordinal);
         }
 
         private async Task<IFtpClient> GetClientAsync(CancellationToken ct)

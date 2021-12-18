@@ -44,7 +44,7 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task InitializeAsync(CancellationToken ct = default)
+        public async Task InitializeAsync(CancellationToken ct)
         {
             try
             {
@@ -76,7 +76,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
+        public async Task<long> GetSizeAsync(string fileName,
+            CancellationToken ct = default)
         {
             var key = GetKey(fileName, nameof(fileName));
 
@@ -98,7 +99,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
+        public async Task CopyAsync(string sourceFileName, string targetFileName,
+            CancellationToken ct = default)
         {
             var keySource = GetKey(sourceFileName, nameof(sourceFileName));
             var keyTarget = GetKey(targetFileName, nameof(targetFileName));
@@ -127,7 +129,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
+        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -157,7 +160,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
+        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -188,7 +192,7 @@ namespace Squidex.Assets
                         FileOptions.DeleteOnClose |
                         FileOptions.SequentialScan);
 
-                    using (tempStream)
+                    await using (tempStream)
                     {
                         await stream.CopyToAsync(tempStream, ct);
 
@@ -212,7 +216,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        public async Task DeleteByPrefixAsync(string prefix,
+            CancellationToken ct = default)
         {
             var key = GetKey(prefix, nameof(prefix));
 
@@ -232,7 +237,7 @@ namespace Squidex.Assets
                         BucketName = options.Bucket,
                         Prefix = key,
                         ContinuationToken = continuationToken
-                    });
+                    }, ct);
 
                     foreach (var item in items.S3Objects)
                     {
@@ -240,7 +245,7 @@ namespace Squidex.Assets
                         {
                             request.Key = item.Key;
 
-                            await s3Client.DeleteObjectAsync(request);
+                            await s3Client.DeleteObjectAsync(request, ct);
                         }
                         catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
                         {
@@ -262,7 +267,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DeleteAsync(string fileName, CancellationToken ct = default)
+        public async Task DeleteAsync(string fileName,
+            CancellationToken ct = default)
         {
             var key = GetKey(fileName, nameof(fileName));
 
@@ -286,7 +292,7 @@ namespace Squidex.Assets
         {
             Guard.NotNullOrEmpty(fileName, parameterName);
 
-            fileName = fileName.Replace("\\", "/");
+            fileName = fileName.Replace("\\", "/", System.StringComparison.Ordinal);
 
             if (!string.IsNullOrWhiteSpace(options.BucketFolder))
             {
@@ -298,7 +304,8 @@ namespace Squidex.Assets
             }
         }
 
-        private async Task EnsureNotExistsAsync(string key, string fileName, CancellationToken ct)
+        private async Task EnsureNotExistsAsync(string key, string fileName,
+            CancellationToken ct)
         {
             try
             {

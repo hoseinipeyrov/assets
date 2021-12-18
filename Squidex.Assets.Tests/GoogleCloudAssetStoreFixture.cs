@@ -19,7 +19,7 @@ namespace Squidex.Assets
             {
                 BucketName = "squidex-test"
             });
-            AssetStore.InitializeAsync().Wait();
+            AssetStore.InitializeAsync(default).Wait();
         }
 
         public void Dispose()

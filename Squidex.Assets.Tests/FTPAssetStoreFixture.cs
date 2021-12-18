@@ -22,7 +22,7 @@ namespace Squidex.Assets
             {
                 Path = "assets"
             }, A.Fake<ILogger<FTPAssetStore>>());
-            AssetStore.InitializeAsync().Wait();
+            AssetStore.InitializeAsync(default).Wait();
         }
 
         public void Dispose()

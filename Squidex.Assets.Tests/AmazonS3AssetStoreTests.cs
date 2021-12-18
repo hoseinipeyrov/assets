@@ -40,7 +40,7 @@ namespace Squidex.Assets
                 ForcePathStyle = false
             });
 
-            await Assert.ThrowsAsync<AssetStoreException>(() => sut.InitializeAsync());
+            await Assert.ThrowsAsync<AssetStoreException>(() => sut.InitializeAsync(default));
         }
 
         [Fact]

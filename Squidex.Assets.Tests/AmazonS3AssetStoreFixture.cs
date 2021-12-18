@@ -24,7 +24,7 @@ namespace Squidex.Assets
                 SecretKey = "secret",
                 ServiceUrl = null
             });
-            AssetStore.InitializeAsync().Wait();
+            AssetStore.InitializeAsync(default).Wait();
         }
     }
 }

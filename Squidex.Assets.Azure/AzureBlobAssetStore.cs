@@ -47,7 +47,7 @@ namespace Squidex.Assets
             containerName = options.ContainerName;
         }
 
-        public async Task InitializeAsync(CancellationToken ct = default)
+        public async Task InitializeAsync(CancellationToken ct)
         {
             try
             {
@@ -78,7 +78,8 @@ namespace Squidex.Assets
             return null;
         }
 
-        public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
+        public async Task<long> GetSizeAsync(string fileName,
+            CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -86,7 +87,7 @@ namespace Squidex.Assets
             {
                 var blob = blobContainer.GetBlobClient(name);
 
-                var properties = await blob.GetPropertiesAsync();
+                var properties = await blob.GetPropertiesAsync(cancellationToken: ct);
 
                 return properties.Value.ContentLength;
             }
@@ -96,7 +97,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
+        public async Task CopyAsync(string sourceFileName, string targetFileName,
+            CancellationToken ct = default)
         {
             var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
             var targetName = GetFileName(targetFileName, nameof(targetFileName));
@@ -106,12 +108,12 @@ namespace Squidex.Assets
                 var blobSource = blobContainer.GetBlobClient(sourceName);
                 var blobTarget = blobContainer.GetBlobClient(targetName);
 
-                await blobTarget.StartCopyFromUriAsync(blobSource.Uri, NoOverwriteCopy, cancellationToken: ct);
+                await blobTarget.StartCopyFromUriAsync(blobSource.Uri, NoOverwriteCopy, ct);
 
                 BlobProperties targetProperties;
                 do
                 {
-                    targetProperties = await blobTarget.GetPropertiesAsync();
+                    targetProperties = await blobTarget.GetPropertiesAsync(cancellationToken: ct);
 
                     await Task.Delay(50, ct);
                 }
@@ -132,7 +134,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
+        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -144,7 +147,7 @@ namespace Squidex.Assets
 
                 var result = await blob.DownloadStreamingAsync(new HttpRange(range.From ?? 0, range.To), cancellationToken: ct);
 
-                using (result.Value.Content)
+                await using (result.Value.Content)
                 {
                     await result.Value.Content.CopyToAsync(stream, ct);
                 }
@@ -155,7 +158,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
+        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -173,13 +177,14 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        public async Task DeleteByPrefixAsync(string prefix,
+            CancellationToken ct = default)
         {
             var name = GetFileName(prefix, nameof(prefix));
 
             var items = blobContainer.GetBlobsAsync(prefix: name, cancellationToken: ct);
 
-            await foreach (var item in items)
+            await foreach (var item in items.WithCancellation(ct))
             {
                 ct.ThrowIfCancellationRequested();
 
@@ -187,7 +192,8 @@ namespace Squidex.Assets
             }
         }
 
-        public Task DeleteAsync(string fileName, CancellationToken ct = default)
+        public Task DeleteAsync(string fileName,
+            CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -198,7 +204,7 @@ namespace Squidex.Assets
         {
             Guard.NotNullOrEmpty(fileName, parameterName);
 
-            return fileName.Replace("\\", "/");
+            return fileName.Replace("\\", "/", StringComparison.Ordinal);
         }
     }
 }

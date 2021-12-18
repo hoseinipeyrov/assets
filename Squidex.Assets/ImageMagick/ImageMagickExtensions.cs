@@ -7,7 +7,6 @@
 
 using System;
 using ImageMagick;
-using TagLib.Image;
 
 namespace Squidex.Assets.ImageMagick
 {
@@ -117,9 +116,9 @@ namespace Squidex.Assets.ImageMagick
             return (ImageOrientation)(image.GetExifProfile()?.GetValue(ExifTag.Orientation)?.Value ?? 0);
         }
 
-        public static ImageOrientation GetOrientation(this File file)
+        public static ImageOrientation GetOrientation(this OrientationType type)
         {
-            return file?.ImageTag?.Orientation ?? ImageOrientation.None;
+            return (ImageOrientation)(int)type;
         }
 
         public static ImageFormat ToImageFormat(this MagickFormat format)

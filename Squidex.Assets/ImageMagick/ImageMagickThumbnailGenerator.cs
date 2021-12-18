@@ -7,16 +7,11 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ImageMagick;
 using SixLabors.ImageSharp;
 using Squidex.Assets.Internal;
-using TagLib;
-using TagLib.Image;
-using static TagLib.File;
-using ImageFile = TagLib.Image.File;
 
 namespace Squidex.Assets.ImageMagick
 {
@@ -112,7 +107,7 @@ namespace Squidex.Assets.ImageMagick
             }
         }
 
-        public async Task<ImageInfo> FixOrientationAsync(Stream source, string mimeType, Stream destination,
+        public async Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
@@ -130,14 +125,6 @@ namespace Squidex.Assets.ImageMagick
                 }
 
                 await collection.WriteAsync(destination, ct);
-
-                var firstImage = collection[0];
-
-                return new ImageInfo(
-                    firstImage.Width,
-                    firstImage.Height,
-                    firstImage.GetOrientation() > ImageOrientation.TopLeft,
-                    firstImage.Format.ToImageFormat());
             }
         }
 
@@ -146,11 +133,6 @@ namespace Squidex.Assets.ImageMagick
         {
             Guard.NotNull(source, nameof(source));
 
-            return Task.FromResult(GetImageInfo(source, mimeType));
-        }
-
-        private static ImageInfo? GetImageInfo(Stream source, string mimeType)
-        {
             try
             {
                 using (var image = new MagickImage())
@@ -160,16 +142,16 @@ namespace Squidex.Assets.ImageMagick
                         Format = GetFormat(mimeType)
                     });
 
-                    return new ImageInfo(
+                    return Task.FromResult<ImageInfo?>(new ImageInfo(
                         image.Width,
                         image.Height,
-                        image.Orientation > OrientationType.TopLeft,
-                        image.Format.ToImageFormat());
+                        image.Orientation.GetOrientation(),
+                        image.Format.ToImageFormat()));
                 }
             }
             catch
             {
-                return null;
+                return Task.FromResult<ImageInfo?>(null);
             }
         }
 
@@ -177,7 +159,7 @@ namespace Squidex.Assets.ImageMagick
         {
             var format = MagickFormat.Unknown;
 
-            if (string.Equals(mimeType, "image/x-tga"))
+            if (string.Equals(mimeType, "image/x-tga", StringComparison.OrdinalIgnoreCase))
             {
                 format = MagickFormat.Tga;
             }

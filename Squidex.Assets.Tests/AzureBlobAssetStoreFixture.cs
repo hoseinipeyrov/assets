@@ -18,7 +18,7 @@ namespace Squidex.Assets
                 ConnectionString = "UseDevelopmentStorage=true",
                 ContainerName = "squidex-test-container"
             });
-            AssetStore.InitializeAsync().Wait();
+            AssetStore.InitializeAsync(default).Wait();
         }
     }
 }

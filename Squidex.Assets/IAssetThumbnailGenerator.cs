@@ -26,7 +26,7 @@ namespace Squidex.Assets
         Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
             CancellationToken ct = default);
 
-        Task<ImageInfo> FixOrientationAsync(Stream source, string mimeType, Stream destination,
+        Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default);
 
         Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,

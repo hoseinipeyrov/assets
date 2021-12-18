@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -30,7 +31,7 @@ namespace Squidex.Assets
             this.bucket = bucket;
         }
 
-        public async Task InitializeAsync(CancellationToken ct = default)
+        public async Task InitializeAsync(CancellationToken ct)
         {
             try
             {
@@ -42,7 +43,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
+        public async Task<long> GetSizeAsync(string fileName,
+            CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -57,7 +59,8 @@ namespace Squidex.Assets
             return fileObject.Length;
         }
 
-        public async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
+        public async Task CopyAsync(string sourceFileName, string targetFileName,
+            CancellationToken ct = default)
         {
             Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
 
@@ -76,7 +79,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range, CancellationToken ct = default)
+        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -97,7 +101,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
+        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -107,7 +112,7 @@ namespace Squidex.Assets
             {
                 if (overwrite)
                 {
-                    await DeleteAsync(fileName);
+                    await DeleteAsync(fileName, ct);
                 }
 
                 await bucket.UploadFromStreamAsync(name, name, stream, cancellationToken: ct);
@@ -122,7 +127,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        public async Task DeleteByPrefixAsync(string prefix,
+            CancellationToken ct = default)
         {
             var name = GetFileName(prefix, nameof(prefix));
 
@@ -150,7 +156,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DeleteAsync(string fileName, CancellationToken ct = default)
+        public async Task DeleteAsync(string fileName,
+            CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -168,7 +175,7 @@ namespace Squidex.Assets
         {
             Guard.NotNullOrEmpty(fileName, parameterName);
 
-            return fileName.Replace("\\", "/");
+            return fileName.Replace("\\", "/", StringComparison.Ordinal);
         }
     }
 }

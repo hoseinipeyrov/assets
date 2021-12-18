@@ -30,7 +30,7 @@ namespace Squidex.Assets
             directory = new DirectoryInfo(path);
         }
 
-        public Task InitializeAsync(CancellationToken ct = default)
+        public Task InitializeAsync(CancellationToken ct)
         {
             try
             {
@@ -49,7 +49,8 @@ namespace Squidex.Assets
             }
         }
 
-        public Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
+        public Task<long> GetSizeAsync(string fileName,
+            CancellationToken ct = default)
         {
             var file = GetFile(fileName, nameof(fileName));
 
@@ -63,7 +64,8 @@ namespace Squidex.Assets
             }
         }
 
-        public Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
+        public Task CopyAsync(string sourceFileName, string targetFileName,
+            CancellationToken ct = default)
         {
             var targetFile = GetFile(targetFileName, nameof(targetFileName));
             var sourceFile = GetFile(sourceFileName, nameof(sourceFileName));
@@ -90,7 +92,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range, CancellationToken ct = default)
+        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -98,7 +101,7 @@ namespace Squidex.Assets
 
             try
             {
-                using (var fileStream = file.OpenRead())
+                await using (var fileStream = file.OpenRead())
                 {
                     await fileStream.CopyToAsync(stream, range, ct);
                 }
@@ -113,7 +116,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
+        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -123,7 +127,7 @@ namespace Squidex.Assets
 
             try
             {
-                using (var fileStream = file.Open(overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write))
+                await using (var fileStream = file.Open(overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write))
                 {
                     await stream.CopyToAsync(fileStream, BufferSize, ct);
                 }
@@ -134,11 +138,14 @@ namespace Squidex.Assets
             }
         }
 
-        public Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        public Task DeleteByPrefixAsync(string prefix,
+            CancellationToken ct = default)
         {
             var cleanedPrefix = GetFileName(prefix, nameof(prefix));
 
+#pragma warning disable MA0042 // Do not use blocking calls in an async method
             if (Delete(GetPath(prefix)))
+#pragma warning restore MA0042 // Do not use blocking calls in an async method
             {
                 return Task.CompletedTask;
             }
@@ -163,7 +170,8 @@ namespace Squidex.Assets
             return Task.CompletedTask;
         }
 
-        public Task DeleteAsync(string fileName, CancellationToken ct = default)
+        public Task DeleteAsync(string fileName,
+            CancellationToken ct = default)
         {
             try
             {
@@ -212,7 +220,7 @@ namespace Squidex.Assets
         {
             Guard.NotNullOrEmpty(fileName, parameterName);
 
-            return fileName.Replace("\\", "/");
+            return fileName.Replace("\\", "/", StringComparison.Ordinal);
         }
     }
 }

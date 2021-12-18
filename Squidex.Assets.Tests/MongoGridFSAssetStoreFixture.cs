@@ -27,7 +27,7 @@ namespace Squidex.Assets
             });
 
             AssetStore = new MongoGridFsAssetStore(gridFSBucket);
-            AssetStore.InitializeAsync().Wait();
+            AssetStore.InitializeAsync(default).Wait();
         }
 
         public void Dispose()

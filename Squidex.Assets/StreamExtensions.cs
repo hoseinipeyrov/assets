@@ -17,7 +17,8 @@ namespace Squidex.Assets
     {
         private static readonly ArrayPool<byte> Pool = ArrayPool<byte>.Create();
 
-        public static async Task CopyToAsync(this Stream source, Stream target, BytesRange range, CancellationToken ct, bool skip = true)
+        public static async Task CopyToAsync(this Stream source, Stream target, BytesRange range,
+            CancellationToken ct, bool skip = true)
         {
             var buffer = Pool.Rent(8192);
 

@@ -42,7 +42,9 @@ namespace Squidex.Assets
             {
                 if (clientTask.Status == TaskStatus.RanToCompletion)
                 {
+#pragma warning disable MA0042 // Do not use blocking calls in an async method
                     Return(clientTask.Result.Client);
+#pragma warning restore MA0042 // Do not use blocking calls in an async method
                 }
 
                 throw;

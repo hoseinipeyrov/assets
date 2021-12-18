@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
@@ -20,7 +21,8 @@ namespace Squidex.Assets
         private readonly AsyncLock readerLock = new AsyncLock();
         private readonly AsyncLock writerLock = new AsyncLock();
 
-        public async Task<long> GetSizeAsync(string fileName, CancellationToken ct = default)
+        public async Task<long> GetSizeAsync(string fileName,
+            CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -35,7 +37,8 @@ namespace Squidex.Assets
             }
         }
 
-        public virtual async Task CopyAsync(string sourceFileName, string targetFileName, CancellationToken ct = default)
+        public virtual async Task CopyAsync(string sourceFileName, string targetFileName,
+            CancellationToken ct = default)
         {
             Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
 
@@ -52,7 +55,8 @@ namespace Squidex.Assets
             }
         }
 
-        public virtual async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default, CancellationToken ct = default)
+        public virtual async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -76,7 +80,8 @@ namespace Squidex.Assets
             }
         }
 
-        public virtual async Task UploadAsync(string fileName, Stream stream, bool overwrite = false, CancellationToken ct = default)
+        public virtual async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+            CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
 
@@ -115,7 +120,8 @@ namespace Squidex.Assets
             }
         }
 
-        public virtual Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
+        public virtual Task DeleteByPrefixAsync(string prefix,
+            CancellationToken ct = default)
         {
             Guard.NotNullOrEmpty(prefix, nameof(prefix));
 
@@ -127,7 +133,8 @@ namespace Squidex.Assets
             return Task.CompletedTask;
         }
 
-        public virtual Task DeleteAsync(string fileName, CancellationToken ct = default)
+        public virtual Task DeleteAsync(string fileName,
+            CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -140,7 +147,7 @@ namespace Squidex.Assets
         {
             Guard.NotNullOrEmpty(fileName, parameterName);
 
-            return fileName.Replace("\\", "/");
+            return fileName.Replace("\\", "/", StringComparison.Ordinal);
         }
     }
 }

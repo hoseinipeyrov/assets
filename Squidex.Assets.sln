@@ -17,7 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.Azure", "Squ
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.Mongo", "Squidex.Assets.Mongo\Squidex.Assets.Mongo.csproj", "{AEBE3A75-D8F3-4236-BAF5-CC9B8A751E21}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "Benchmarks\Benchmarks.csproj", "{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "Benchmarks\Benchmarks.csproj", "{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.ResizeService", "Squidex.Assets.ResizeService\Squidex.Assets.ResizeService.csproj", "{D3595B59-3BFD-4042-B511-53CC4C32C30F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3595B59-3BFD-4042-B511-53CC4C32C30F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3595B59-3BFD-4042-B511-53CC4C32C30F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3595B59-3BFD-4042-B511-53CC4C32C30F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3595B59-3BFD-4042-B511-53CC4C32C30F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

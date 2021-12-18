@@ -47,7 +47,7 @@ namespace Squidex.Assets
 
             if (!inner.CanRead)
             {
-                throw new ArgumentException("Inner stream must be readable.");
+                throw new ArgumentException("Inner stream must be readable.", nameof(inner));
             }
 
             this.inner = inner;

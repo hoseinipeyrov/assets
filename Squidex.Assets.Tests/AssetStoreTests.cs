@@ -33,7 +33,9 @@ namespace Squidex.Assets
 
         protected AssetStoreTests()
         {
+#pragma warning disable MA0056 // Do not call overridable members in constructor
             sut = new Lazy<T>(CreateStore);
+#pragma warning restore MA0056 // Do not call overridable members in constructor
         }
 
         public abstract T CreateStore();

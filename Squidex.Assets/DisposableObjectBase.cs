@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Squidex
+namespace Squidex.Assets
 {
     public abstract class DisposableObjectBase : IDisposable
     {
