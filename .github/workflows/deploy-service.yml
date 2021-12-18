@@ -11,7 +11,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-        
     steps:
     - name: Calculate Version
       env:
@@ -19,10 +18,10 @@ jobs:
       run: |
         echo "BUILD_NUMBER=$(($BUILD_NUMBER + 0))" >> $GITHUB_ENV
   
-    - name: Set up qemu
+    - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
     
-    - name: Set up buildx
+    - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
     - name: Cache Docker layers

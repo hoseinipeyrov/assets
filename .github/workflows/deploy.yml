@@ -1,24 +1,28 @@
 name: Build and Push to Nuget
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-        
     steps:
     - uses: actions/checkout@v1
  
-    - name: setup dotnet
+    - name: Setup Dotnet
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 6.0.100
 
-    - name: pack
+    - name: Pack
       run: |
         dotnet pack -c Release
 
-    - name: publish
+    - name: Publish
       run: |
         dotnet nuget push **/*.nupkg --source 'https://api.nuget.org/v3/index.json' --skip-duplicate -k ${{ secrets.nuget }} --no-symbols 1 
