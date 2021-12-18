@@ -56,7 +56,7 @@ namespace Squidex.Assets
 
                 foreach (var inner in inners)
                 {
-                    if (inner.CanWrite(mimeType) && inner.CanWrite(mimeType))
+                    if (inner.CanWrite(mimeType) && inner.CanWrite(destinationMimeTime))
                     {
                         await inner.CreateThumbnailAsync(source, mimeType, destination, options, ct);
                         return;

@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Squidex.Assets.ImageMagick;
 using Squidex.Assets.ImageSharp;
 using Squidex.Assets.Remote;
 
@@ -22,7 +23,9 @@ namespace Squidex.Assets
             ImageFormat.PNG,
             ImageFormat.GIF,
             ImageFormat.JPEG,
-            ImageFormat.TGA
+            ImageFormat.TGA,
+            ImageFormat.TIFF,
+            ImageFormat.WEBP
         };
 
         protected override string Name()
@@ -32,16 +35,23 @@ namespace Squidex.Assets
 
         protected override IAssetThumbnailGenerator CreateSut()
         {
-            var serviceCollection = new ServiceCollection();
+            var services =
+                new ServiceCollection()
+                .AddHttpClient("Resize", options =>
+                {
+                    options.BaseAddress = new Uri("http://localhost:5005");
+                }).Services
+                .BuildServiceProvider();
 
-            serviceCollection.AddHttpClient("Resize", options =>
+            var httpClientFactory = services.GetRequiredService<IHttpClientFactory>();
+
+            var inner = new CompositeThumbnailGenerator(new IAssetThumbnailGenerator[]
             {
-                options.BaseAddress = new Uri("http://localhost:5005");
+                new ImageSharpThumbnailGenerator(),
+                new ImageMagickThumbnailGenerator()
             });
 
-            var httpClientFactory = serviceCollection.BuildServiceProvider().GetRequiredService<IHttpClientFactory>();
-
-            return new RemoteThumbnailGenerator(httpClientFactory, new ImageSharpThumbnailGenerator());
+            return new RemoteThumbnailGenerator(httpClientFactory, inner);
         }
     }
 }

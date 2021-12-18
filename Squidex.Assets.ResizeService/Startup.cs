@@ -25,6 +25,7 @@ namespace Squidex.Assets.ResizeService
             services.AddHealthChecks();
             services.AddDefaultForwardRules();
             services.AddDefaultWebServices(configuration);
+            services.AddSingleton<ImageResizer>();
 
             services.AddSingletonAs(c => new CompositeThumbnailGenerator(new IAssetThumbnailGenerator[]
             {
@@ -41,57 +42,11 @@ namespace Squidex.Assets.ResizeService
             app.UseRouting();
             app.UseHealthChecks("/healthz");
 
+            var resizer = app.ApplicationServices.GetRequiredService<ImageResizer>();
+
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapPost("/resize", async context =>
-                {
-                    try
-                    {
-                        var thumbnailGenerator = context.RequestServices.GetRequiredService<IAssetThumbnailGenerator>();
-
-                        var options = ResizeOptions.Parse(context.Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
-
-                        await thumbnailGenerator.CreateThumbnailAsync(
-                            context.Request.Body,
-                            context.Request.ContentType ?? "image/png",
-                            context.Response.Body, options,
-                            context.RequestAborted);
-                    }
-                    catch (Exception ex)
-                    {
-                        var log = context.RequestServices.GetRequiredService<ISemanticLog>();
-
-                        log.LogError(ex, w => w
-                            .WriteProperty("action", "Resize")
-                            .WriteProperty("status", "Failed"));
-
-                        context.Response.StatusCode = 400;
-                    }
-                });
-
-                endpoints.MapPost("/orient", async context =>
-                {
-                    try
-                    {
-                        var thumbnailGenerator = context.RequestServices.GetRequiredService<IAssetThumbnailGenerator>();
-
-                        await thumbnailGenerator.FixOrientationAsync(
-                            context.Request.Body,
-                            context.Request.ContentType ?? "image/png",
-                            context.Response.Body,
-                            context.RequestAborted);
-                    }
-                    catch (Exception ex)
-                    {
-                        var log = context.RequestServices.GetRequiredService<ISemanticLog>();
-
-                        log.LogError(ex, w => w
-                            .WriteProperty("action", "Resize")
-                            .WriteProperty("status", "Failed"));
-
-                        context.Response.StatusCode = 400;
-                    }
-                });
+                resizer.Map(endpoints);
             });
         }
     }
