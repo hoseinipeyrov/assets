@@ -22,9 +22,6 @@ namespace Squidex.Assets.ResizeService
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingletonAs(_ => JsonLogWriterFactory.Readable())
-                .As<IRootWriterFactory>();
-
             services.AddHealthChecks();
             services.AddDefaultForwardRules();
             services.AddDefaultWebServices(configuration);
