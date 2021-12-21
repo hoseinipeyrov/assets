@@ -44,7 +44,8 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task InitializeAsync(CancellationToken ct)
+        public async Task InitializeAsync(
+            CancellationToken ct)
         {
             try
             {

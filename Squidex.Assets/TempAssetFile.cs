@@ -14,9 +14,9 @@ namespace Squidex.Assets
     {
         private readonly Stream stream;
 
-        public TempAssetFile(AssetFile source)
-            : this(source.FileName, source.MimeType, source.FileSize)
+        public static TempAssetFile Create(AssetFile source)
         {
+            return new TempAssetFile(source.FileName, source.MimeType, source.FileSize);
         }
 
         public TempAssetFile(string fileName, string mimeType, long fileSize)

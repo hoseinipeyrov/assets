@@ -18,7 +18,8 @@ namespace Squidex.Assets
             return null;
         }
 
-        Task InitializeAsync(CancellationToken ct)
+        Task InitializeAsync(
+            CancellationToken ct)
         {
             return Task.CompletedTask;
         }

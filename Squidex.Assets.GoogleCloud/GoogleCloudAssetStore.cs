@@ -32,7 +32,8 @@ namespace Squidex.Assets
             bucketName = options.BucketName;
         }
 
-        public async Task InitializeAsync(CancellationToken ct)
+        public async Task InitializeAsync(
+            CancellationToken ct)
         {
             try
             {

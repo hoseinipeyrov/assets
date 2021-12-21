@@ -30,7 +30,8 @@ namespace Squidex.Assets
             this.clientsLimit = clientsLimit;
         }
 
-        public async Task<(IFtpClient, bool IsNew)> GetClientAsync(CancellationToken ct)
+        public async Task<(IFtpClient, bool IsNew)> GetClientAsync(
+            CancellationToken ct)
         {
             var clientTask = GetClientCoreAsync();
 

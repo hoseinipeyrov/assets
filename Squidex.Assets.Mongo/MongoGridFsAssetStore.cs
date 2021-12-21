@@ -31,7 +31,8 @@ namespace Squidex.Assets
             this.bucket = bucket;
         }
 
-        public async Task InitializeAsync(CancellationToken ct)
+        public async Task InitializeAsync(
+            CancellationToken ct)
         {
             try
             {

@@ -36,7 +36,8 @@ namespace Squidex.Assets
             this.log = log;
         }
 
-        public async Task InitializeAsync(CancellationToken ct)
+        public async Task InitializeAsync(
+            CancellationToken ct)
         {
             var client = await GetClientAsync(ct);
             try
@@ -226,7 +227,8 @@ namespace Squidex.Assets
             return fileName.Replace("\\", "/", StringComparison.Ordinal);
         }
 
-        private async Task<IFtpClient> GetClientAsync(CancellationToken ct)
+        private async Task<IFtpClient> GetClientAsync(
+            CancellationToken ct)
         {
             var (client, isNew) = await pool.GetClientAsync(ct);
             try

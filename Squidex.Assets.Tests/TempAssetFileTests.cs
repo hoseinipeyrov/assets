@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System.IO;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Squidex.Assets
@@ -28,12 +29,22 @@ namespace Squidex.Assets
         {
             var source = new DelegateAssetFile("fileName", "file/type", 1024, () => new MemoryStream());
 
-            using (var result = new TempAssetFile(source))
+            using (var result = TempAssetFile.Create(source))
             {
                 Assert.Equal("fileName", result.FileName);
                 Assert.Equal("file/type", result.MimeType);
                 Assert.Equal(1024, result.FileSize);
             }
+        }
+
+        [Fact]
+        public void Should_be_serializable_to_json()
+        {
+            var source = new TempAssetFile("fileName", "file/type", 1024);
+
+            var deserialized = JsonConvert.DeserializeObject<TempAssetFile>(JsonConvert.SerializeObject(source));
+
+            Assert.Equal(source.FileName, deserialized.FileName);
         }
 
         [Fact]

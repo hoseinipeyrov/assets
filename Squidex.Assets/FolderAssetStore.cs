@@ -30,7 +30,8 @@ namespace Squidex.Assets
             directory = new DirectoryInfo(path);
         }
 
-        public Task InitializeAsync(CancellationToken ct)
+        public Task InitializeAsync(
+            CancellationToken ct)
         {
             try
             {
