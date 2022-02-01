@@ -50,29 +50,5 @@ namespace Squidex.Assets
         {
             return new NonDisposingStream(stream);
         }
-
-        private sealed class NonDisposingStream : DelegatingStream
-        {
-            public NonDisposingStream(Stream inner)
-                : base(inner)
-            {
-                inner.Position = 0;
-            }
-
-            public override void Close()
-            {
-                Flush();
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                Flush();
-            }
-
-            public override async ValueTask DisposeAsync()
-            {
-                await FlushAsync();
-            }
-        }
     }
 }

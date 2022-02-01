@@ -19,7 +19,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.Mongo", "Squ
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "Benchmarks\Benchmarks.csproj", "{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.ResizeService", "Squidex.Assets.ResizeService\Squidex.Assets.ResizeService.csproj", "{D3595B59-3BFD-4042-B511-53CC4C32C30F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.ResizeService", "Squidex.Assets.ResizeService\Squidex.Assets.ResizeService.csproj", "{D3595B59-3BFD-4042-B511-53CC4C32C30F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.TusAdapter", "Squidex.Assets.TusAdapter\Squidex.Assets.TusAdapter.csproj", "{0845CC80-AD20-41B0-AFA1-A51F4808F031}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +65,10 @@ Global
 		{D3595B59-3BFD-4042-B511-53CC4C32C30F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3595B59-3BFD-4042-B511-53CC4C32C30F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3595B59-3BFD-4042-B511-53CC4C32C30F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0845CC80-AD20-41B0-AFA1-A51F4808F031}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0845CC80-AD20-41B0-AFA1-A51F4808F031}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0845CC80-AD20-41B0-AFA1-A51F4808F031}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0845CC80-AD20-41B0-AFA1-A51F4808F031}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

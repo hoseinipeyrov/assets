@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Squidex.Assets
 {
-    public abstract class DelegatingStream : Stream
+    public abstract class DelegateStream : Stream
     {
         private readonly Stream innerStream;
 
@@ -59,7 +59,7 @@ namespace Squidex.Assets
             set => innerStream.WriteTimeout = value;
         }
 
-        protected DelegatingStream(Stream innerStream)
+        protected DelegateStream(Stream innerStream)
         {
             if (innerStream == Null)
             {
