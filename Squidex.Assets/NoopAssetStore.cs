@@ -32,7 +32,7 @@ namespace Squidex.Assets
             throw new NotSupportedException();
         }
 
-        public Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             throw new NotSupportedException();

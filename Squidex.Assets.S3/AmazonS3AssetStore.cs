@@ -161,7 +161,7 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
@@ -188,7 +188,8 @@ namespace Squidex.Assets
                     var tempStream = new FileStream(tempFileName,
                         FileMode.Create,
                         FileAccess.ReadWrite,
-                        FileShare.Delete, 1024 * 16,
+                        FileShare.Delete,
+                        1024 * 16,
                         FileOptions.Asynchronous |
                         FileOptions.DeleteOnClose |
                         FileOptions.SequentialScan);
@@ -205,11 +206,12 @@ namespace Squidex.Assets
                 else
                 {
                     request.InputStream = new SeekFakerStream(stream);
-
                     request.AutoCloseStream = false;
 
                     await transferUtility.UploadAsync(request, ct);
                 }
+
+                return -1;
             }
             catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.PreconditionFailed)
             {

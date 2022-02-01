@@ -161,15 +161,21 @@ namespace Squidex.Assets
             }
 
             var partName = PartName(fileId, metadata.Parts);
+            var partSize = -1L;
             try
             {
-                await assetStore.UploadAsync(partName, stream, false, cancellationToken);
+                var cancellableStream = new CancellableStream(stream, cancellationToken);
+
+                partSize = await assetStore.UploadAsync(partName, cancellableStream, false, default);
             }
             catch (OperationCanceledException)
             {
             }
 
-            var partSize = await assetStore.GetSizeAsync(partName, cancellationToken);
+            if (partSize < 0)
+            {
+                partSize = await assetStore.GetSizeAsync(partName, cancellationToken);
+            }
 
             metadata.BytesWritten += partSize;
             metadata.Parts++;
@@ -250,7 +256,7 @@ namespace Squidex.Assets
         public async Task<int> RemoveExpiredFilesAsync(
             CancellationToken cancellationToken)
         {
-            var expirationsDeleted = 0;
+            var deletionCount = 0;
             var expirations = keyValueStore.GetExpiredEntriesAsync<Metadata>(DateTimeOffset.UtcNow, cancellationToken);
 
             await foreach (var (key, expiration) in expirations.WithCancellation(cancellationToken))
@@ -261,10 +267,10 @@ namespace Squidex.Assets
                 }
 
                 await keyValueStore.DeleteAsync(key, cancellationToken);
-                expirationsDeleted++;
+                deletionCount++;
             }
 
-            return expirationsDeleted;
+            return deletionCount;
         }
 
         private Task SetMetadataAsync(string fileId, Metadata metadata,

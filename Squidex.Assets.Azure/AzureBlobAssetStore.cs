@@ -159,7 +159,7 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
@@ -171,6 +171,8 @@ namespace Squidex.Assets
                 var blob = blobContainer.GetBlobClient(name);
 
                 await blob.UploadAsync(stream, overwrite ? null : NoOverwriteUpload, ct);
+
+                return -1;
             }
             catch (RequestFailedException ex) when (ex.Status == 409)
             {

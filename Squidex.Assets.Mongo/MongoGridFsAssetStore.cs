@@ -102,7 +102,7 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
@@ -117,6 +117,8 @@ namespace Squidex.Assets
                 }
 
                 await bucket.UploadFromStreamAsync(name, name, stream, cancellationToken: ct);
+
+                return -1;
             }
             catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
             {

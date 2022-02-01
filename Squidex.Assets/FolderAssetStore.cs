@@ -117,7 +117,7 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
@@ -137,6 +137,8 @@ namespace Squidex.Assets
             {
                 throw new AssetAlreadyExistsException(file.Name);
             }
+
+            return file.Length;
         }
 
         public Task DeleteByPrefixAsync(string prefix,
@@ -144,9 +146,7 @@ namespace Squidex.Assets
         {
             var cleanedPrefix = GetFileName(prefix, nameof(prefix));
 
-#pragma warning disable MA0042 // Do not use blocking calls in an async method
             if (Delete(GetPath(prefix)))
-#pragma warning restore MA0042 // Do not use blocking calls in an async method
             {
                 return Task.CompletedTask;
             }

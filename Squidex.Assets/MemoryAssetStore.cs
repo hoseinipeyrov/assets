@@ -80,7 +80,7 @@ namespace Squidex.Assets
             }
         }
 
-        public virtual async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public virtual async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
@@ -118,6 +118,8 @@ namespace Squidex.Assets
             {
                 throw new AssetAlreadyExistsException(name);
             }
+
+            return memoryStream.Length;
         }
 
         public virtual Task DeleteByPrefixAsync(string prefix,

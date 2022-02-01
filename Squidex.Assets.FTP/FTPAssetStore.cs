@@ -143,7 +143,7 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
@@ -154,6 +154,8 @@ namespace Squidex.Assets
             try
             {
                 await UploadAsync(client, name, stream, overwrite, ct);
+
+                return -1;
             }
             finally
             {

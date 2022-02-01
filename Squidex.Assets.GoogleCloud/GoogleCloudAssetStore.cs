@@ -111,14 +111,16 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
             try
             {
-                await storageClient.UploadObjectAsync(bucketName, name, "application/octet-stream", stream, overwrite ? null : IfNotExists, ct);
+                var result = await storageClient.UploadObjectAsync(bucketName, name, "application/octet-stream", stream, overwrite ? null : IfNotExists, ct);
+
+                return (long)result.Size.Value;
             }
             catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.PreconditionFailed)
             {
