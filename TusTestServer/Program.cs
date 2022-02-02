@@ -8,10 +8,7 @@
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using Squidex.Assets;
-using tusdotnet;
-using tusdotnet.Interfaces;
-using tusdotnet.Models;
-using tusdotnet.Models.Configuration;
+using TusTestServer;
 using TutTestServer;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,45 +28,52 @@ var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptio
 
 builder.Services.AddSingleton<IMongoDatabase>(
     mongoDatabase);
+
 builder.Services.AddSingleton<IHostedService,
     Initializer>();
-builder.Services.AddSingleton<ITusStore,
-    AssetTusStore>();
-builder.Services.AddSingleton<IAssetStore>(
+
+builder.Services.AddSingleton<MongoGridFsAssetStore>(
     new MongoGridFsAssetStore(gridFSBucket));
+builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<MongoGridFsAssetStore>());
+
+builder.Services.AddSingleton<FolderAssetStore>(
+    c => ActivatorUtilities.CreateInstance<FolderAssetStore>(c, "uploads"));
+builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<FolderAssetStore>());
+
+builder.Services.AddSingleton<AmazonS3AssetStore>(
+    c => ActivatorUtilities.CreateInstance<AmazonS3AssetStore>(c,
+        builder.Configuration.GetSection("amazonS3").Get<AmazonS3AssetOptions>()));
+builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<AmazonS3AssetStore>());
+
+builder.Services.AddSingleton<AzureBlobAssetStore>(
+    c => ActivatorUtilities.CreateInstance<AzureBlobAssetStore>(c,
+        builder.Configuration.GetSection("azureBlob").Get<AzureBlobAssetOptions>()));
+builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<AzureBlobAssetStore>());
+
+builder.Services.AddSingleton<GoogleCloudAssetStore>(
+    c => ActivatorUtilities.CreateInstance<GoogleCloudAssetStore>(c,
+        builder.Configuration.GetSection("googleCloud").Get<GoogleCloudAssetOptions>()));
+builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<GoogleCloudAssetStore>());
+
 builder.Services.AddSingleton<IAssetKeyValueStore<TusMetadata>,
     MongoAssetKeyValueStore<TusMetadata>>();
 
 var app = builder.Build();
 
-app.UseTus(httpContext => new DefaultTusConfiguration
-{
-    Store = httpContext.RequestServices.GetRequiredService<ITusStore>(),
-    UrlPath = "/files/",
-    Events = new Events
-    {
-        OnFileCompleteAsync = async eventContext =>
-        {
-            var fileObject = (AssetFile)(await eventContext.GetFileAsync());
+app.UseMyTus<MongoGridFsAssetStore>(
+    "/files/mongodb/");
 
-            await using var fileStream = fileObject.OpenRead();
+app.UseMyTus<FolderAssetStore>(
+    "/files/folder/");
 
-            var name = fileObject.FileName;
+app.UseMyTus<AmazonS3AssetStore>(
+    "/files/amazon-s3/");
 
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                name = Guid.NewGuid().ToString();
-            }
+app.UseMyTus<AzureBlobAssetStore>(
+    "/files/azure-blob/");
 
-            Directory.CreateDirectory("uploads");
-
-            await using (var stream = new FileStream($"uploads/{name}", FileMode.CreateNew))
-            {
-                await fileStream.CopyToAsync(stream, eventContext.CancellationToken);
-            }
-        }
-    }
-});
+app.UseMyTus<GoogleCloudAssetStore>(
+    "/files/google-cloud/");
 
 app.UseStaticFiles();
 

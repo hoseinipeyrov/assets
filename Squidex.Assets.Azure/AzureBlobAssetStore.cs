@@ -55,9 +55,10 @@ namespace Squidex.Assets
                 var blobServiceClient = new BlobServiceClient(connectionString);
 
                 blobContainer = blobServiceClient.GetBlobContainerClient(containerName);
-                blobContainerProperties = await blobContainer.GetPropertiesAsync(cancellationToken: ct);
 
                 await blobContainer.CreateIfNotExistsAsync(cancellationToken: ct);
+
+                blobContainerProperties = await blobContainer.GetPropertiesAsync(cancellationToken: ct);
             }
             catch (Exception ex)
             {

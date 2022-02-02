@@ -181,7 +181,7 @@ namespace Squidex.Assets
                     Key = key
                 };
 
-                if (stream.GetLengthOrZero() > 0)
+                if (stream.GetLengthOrZero() <= 0)
                 {
                     var tempFileName = Path.GetTempFileName();
 

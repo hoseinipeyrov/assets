@@ -92,11 +92,6 @@ namespace Squidex.Assets
                 return null;
             }
 
-            if (files.TryGetValue(fileId, out var file))
-            {
-                return await file;
-            }
-
             async Task<AssetTusFile> CreateFileAsync(string fileId, TusMetadata metadata, CancellationToken cancellationToken)
             {
                 var tempPath = Path.Combine(Path.GetTempPath(), Key(fileId));
@@ -115,17 +110,18 @@ namespace Squidex.Assets
 
                 var parsedMetadata = MetadataParser.ParseAndValidate(MetadataParsingStrategy.AllowEmptyValues, metadata.UploadMetadata).Metadata;
 
+                await CleanupAsync(metadata, default);
+
                 return new AssetTusFile(fileId, metadata, parsedMetadata, tempStream, x =>
                 {
                     files.TryRemove(x.Id, out _);
                 });
             }
 
-            file = CreateFileAsync(fileId, metadata, cancellationToken);
-
-            files[fileId] = file;
-
-            return await file;
+            return await files.GetOrAdd(fileId, x =>
+            {
+                return CreateFileAsync(x, metadata, cancellationToken);
+            });
         }
 
         public async Task<bool> VerifyChecksumAsync(string fileId, string algorithm, byte[] checksum,
@@ -267,17 +263,22 @@ namespace Squidex.Assets
 
             var expirations = keyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
 
-            await foreach (var (key, expiration) in expirations.WithCancellation(cancellationToken))
+            await foreach (var (_, expiration) in expirations.WithCancellation(cancellationToken))
             {
-                for (var i = 0; i < expiration.WrittenParts; i++)
-                {
-                    await assetStore.DeleteAsync(PartName(expiration.Id, i), cancellationToken);
-                }
-
-                await keyValueStore.DeleteAsync(key, cancellationToken);
+                await CleanupAsync(expiration, cancellationToken);
             }
 
             return deletionCount;
+        }
+
+        private async Task CleanupAsync(TusMetadata metadata, CancellationToken cancellationToken)
+        {
+            for (var i = 0; i < metadata.WrittenParts; i++)
+            {
+                await assetStore.DeleteAsync(PartName(metadata.Id, i), cancellationToken);
+            }
+
+            await keyValueStore.DeleteAsync(Key(metadata.Id), cancellationToken);
         }
 
         private Task SetMetadataAsync(string fileId, TusMetadata metadata,

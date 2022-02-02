@@ -11,19 +11,23 @@ namespace TutTestServer
 {
     public sealed class Initializer : IHostedService
     {
-        private readonly IAssetStore assetStore;
+        private readonly IEnumerable<IAssetStore> assetStores;
         private readonly IAssetKeyValueStore<TusMetadata> assetKeyValueStore;
 
-        public Initializer(IAssetStore assetStore, IAssetKeyValueStore<TusMetadata> assetKeyValueStore)
+        public Initializer(IEnumerable<IAssetStore> assetStores, IAssetKeyValueStore<TusMetadata> assetKeyValueStore)
         {
-            this.assetStore = assetStore;
+            this.assetStores = assetStores;
             this.assetKeyValueStore = assetKeyValueStore;
         }
 
         public async Task StartAsync(
             CancellationToken cancellationToken)
         {
-            await assetStore.InitializeAsync(cancellationToken);
+            foreach (var assetStore in assetStores)
+            {
+                await assetStore.InitializeAsync(cancellationToken);
+            }
+
             await assetKeyValueStore.InitializeAsync(cancellationToken);
         }
 

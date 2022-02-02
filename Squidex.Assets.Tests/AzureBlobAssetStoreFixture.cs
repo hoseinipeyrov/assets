@@ -5,6 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.Extensions.Configuration;
+
 namespace Squidex.Assets
 {
     public sealed class AzureBlobAssetStoreFixture
@@ -13,11 +15,9 @@ namespace Squidex.Assets
 
         public AzureBlobAssetStoreFixture()
         {
-            AssetStore = new AzureBlobAssetStore(new AzureBlobAssetOptions
-            {
-                ConnectionString = "UseDevelopmentStorage=true",
-                ContainerName = "squidex-test-container"
-            });
+            var options = TestHelpers.Configuration.GetSection("azureBlob").Get<AzureBlobAssetOptions>();
+
+            AssetStore = new AzureBlobAssetStore(options);
             AssetStore.InitializeAsync(default).Wait();
         }
     }

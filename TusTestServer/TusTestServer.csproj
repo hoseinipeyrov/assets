@@ -22,7 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Squidex.Assets.Azure\Squidex.Assets.Azure.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.GoogleCloud\Squidex.Assets.GoogleCloud.csproj" />
     <ProjectReference Include="..\Squidex.Assets.Mongo\Squidex.Assets.Mongo.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.S3\Squidex.Assets.S3.csproj" />
     <ProjectReference Include="..\Squidex.Assets.TusAdapter\Squidex.Assets.TusAdapter.csproj" />
     <ProjectReference Include="..\Squidex.Assets\Squidex.Assets.csproj" />
   </ItemGroup>
