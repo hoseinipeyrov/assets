@@ -61,5 +61,17 @@ namespace Squidex.Assets
                 Pool.Return(buffer);
             }
         }
+
+        public static long GetLengthOrZero(this Stream stream)
+        {
+            try
+            {
+                return stream.Length;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
     }
 }

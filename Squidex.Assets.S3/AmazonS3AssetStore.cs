@@ -181,7 +181,7 @@ namespace Squidex.Assets
                     Key = key
                 };
 
-                if (!HasContentLength(stream))
+                if (stream.GetLengthOrZero() > 0)
                 {
                     var tempFileName = Path.GetTempFileName();
 
@@ -320,18 +320,6 @@ namespace Squidex.Assets
             }
 
             throw new AssetAlreadyExistsException(fileName);
-        }
-
-        private static bool HasContentLength(Stream stream)
-        {
-            try
-            {
-                return stream.Length > 0;
-            }
-            catch
-            {
-                return false;
-            }
         }
     }
 }

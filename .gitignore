@@ -15,6 +15,7 @@ build/
 obj/
 out/
 publish/
+uploads/
 
 # Test Output
 _test-output/

@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
+using tusdotnet.Parsers;
 
 namespace Squidex.Assets
 {
@@ -29,9 +30,9 @@ namespace Squidex.Assets
         private static readonly TimeSpan DefaultExpiration = TimeSpan.FromDays(2);
         private readonly ConcurrentDictionary<string, Task<AssetTusFile>> files = new ConcurrentDictionary<string, Task<AssetTusFile>>();
         private readonly IAssetStore assetStore;
-        private readonly IKeyValueStore keyValueStore;
+        private readonly IAssetKeyValueStore<TusMetadata> keyValueStore;
 
-        public AssetTusStore(IAssetStore assetStore, IKeyValueStore keyValueStore)
+        public AssetTusStore(IAssetStore assetStore, IAssetKeyValueStore<TusMetadata> keyValueStore)
         {
             this.assetStore = assetStore;
             this.keyValueStore = keyValueStore;
@@ -42,8 +43,9 @@ namespace Squidex.Assets
         {
             var id = Guid.NewGuid().ToString();
 
-            var metadataObj = new Metadata
+            var metadataObj = new TusMetadata
             {
+                Created = true,
                 UploadLength = uploadLength,
                 UploadMetadata = metadata,
                 Expiration = DateTimeOffset.UtcNow.Add(DefaultExpiration)
@@ -85,7 +87,7 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            if (metadata.Parts == 0)
+            if (metadata.WrittenParts == 0)
             {
                 return null;
             }
@@ -95,7 +97,7 @@ namespace Squidex.Assets
                 return await file;
             }
 
-            async Task<AssetTusFile> CreateFileAsync(string fileId, Metadata metadata, CancellationToken cancellationToken)
+            async Task<AssetTusFile> CreateFileAsync(string fileId, TusMetadata metadata, CancellationToken cancellationToken)
             {
                 var tempPath = Path.Combine(Path.GetTempPath(), Key(fileId));
 
@@ -106,12 +108,14 @@ namespace Squidex.Assets
                     4096,
                     FileOptions.DeleteOnClose);
 
-                for (var i = 0; i < metadata.Parts; i++)
+                for (var i = 0; i < metadata.WrittenParts; i++)
                 {
                     await assetStore.DownloadAsync(PartName(fileId, i), tempStream, default, cancellationToken);
                 }
 
-                return new AssetTusFile(fileId, metadata, tempStream, x =>
+                var parsedMetadata = MetadataParser.ParseAndValidate(MetadataParsingStrategy.AllowEmptyValues, metadata.UploadMetadata).Metadata;
+
+                return new AssetTusFile(fileId, metadata, parsedMetadata, tempStream, x =>
                 {
                     files.TryRemove(x.Id, out _);
                 });
@@ -150,9 +154,9 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            if (stream.Length > 0 && metadata.UploadLength.HasValue)
+            if (stream.GetLengthOrZero() > 0 && metadata.UploadLength.HasValue)
             {
-                var sizeAfterUpload = metadata.UploadLength + stream.Length;
+                var sizeAfterUpload = metadata.UploadLength + stream.GetLengthOrZero();
 
                 if (metadata.UploadLength + stream.Length > metadata.UploadLength.Value)
                 {
@@ -160,32 +164,35 @@ namespace Squidex.Assets
                 }
             }
 
-            var partName = PartName(fileId, metadata.Parts);
+            var partName = PartName(fileId, metadata.WrittenParts);
             var partSize = -1L;
             try
             {
                 var cancellableStream = new CancellableStream(stream, cancellationToken);
 
-                partSize = await assetStore.UploadAsync(partName, cancellableStream, false, default);
+                partSize = await assetStore.UploadAsync(partName, cancellableStream, true, default);
             }
             catch (OperationCanceledException)
             {
             }
-
-            if (partSize < 0)
+            finally
             {
-                partSize = await assetStore.GetSizeAsync(partName, cancellationToken);
+                // Do not flow cancellation token here so we can save the metadata even if the request is aborted.
+                if (partSize < 0)
+                {
+                    partSize = await assetStore.GetSizeAsync(partName, default);
+                }
+
+                metadata.WrittenBytes += partSize;
+                metadata.WrittenParts++;
+
+                await SetMetadataAsync(fileId, metadata, default);
             }
 
-            metadata.BytesWritten += partSize;
-            metadata.Parts++;
-
-            if (metadata.UploadLength.HasValue && metadata.BytesWritten > metadata.UploadLength.Value)
+            if (metadata.UploadLength.HasValue && metadata.WrittenBytes > metadata.UploadLength.Value)
             {
-                throw new TusStoreException($"Stream contains more data than the file's upload length. Stream data: {metadata.BytesWritten}, upload length: {metadata.UploadLength}.");
+                throw new TusStoreException($"Stream contains more data than the file's upload length. Stream data: {metadata.WrittenBytes}, upload length: {metadata.UploadLength}.");
             }
-
-            await SetMetadataAsync(fileId, metadata, cancellationToken);
 
             return partSize;
         }
@@ -195,7 +202,7 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            return metadata.BytesWritten > 0 || metadata.Created;
+            return metadata.WrittenBytes > 0 || metadata.Created;
         }
 
         public async Task<IEnumerable<string>> GetExpiredFilesAsync(
@@ -203,7 +210,7 @@ namespace Squidex.Assets
         {
             var result = new List<string>();
 
-            var expirations = keyValueStore.GetExpiredEntriesAsync<Metadata>(DateTimeOffset.UtcNow, cancellationToken);
+            var expirations = keyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
 
             await foreach (var (_, value) in expirations.WithCancellation(cancellationToken))
             {
@@ -234,7 +241,7 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            return metadata.BytesWritten;
+            return metadata.WrittenBytes;
         }
 
         public async Task<DateTimeOffset?> GetExpirationAsync(string fileId,
@@ -245,35 +252,35 @@ namespace Squidex.Assets
             return metadata.Expiration;
         }
 
-        private Task<Metadata> GetMetadataAsync(string fileId,
+        private Task<TusMetadata> GetMetadataAsync(string fileId,
             CancellationToken ct)
         {
             var key = Key(fileId);
 
-            return keyValueStore.GetAsync<Metadata>(key, ct);
+            return keyValueStore.GetAsync(key, ct);
         }
 
         public async Task<int> RemoveExpiredFilesAsync(
             CancellationToken cancellationToken)
         {
             var deletionCount = 0;
-            var expirations = keyValueStore.GetExpiredEntriesAsync<Metadata>(DateTimeOffset.UtcNow, cancellationToken);
+
+            var expirations = keyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
 
             await foreach (var (key, expiration) in expirations.WithCancellation(cancellationToken))
             {
-                for (var i = 0; i < expiration.Parts; i++)
+                for (var i = 0; i < expiration.WrittenParts; i++)
                 {
                     await assetStore.DeleteAsync(PartName(expiration.Id, i), cancellationToken);
                 }
 
                 await keyValueStore.DeleteAsync(key, cancellationToken);
-                deletionCount++;
             }
 
             return deletionCount;
         }
 
-        private Task SetMetadataAsync(string fileId, Metadata metadata,
+        private Task SetMetadataAsync(string fileId, TusMetadata metadata,
             CancellationToken ct)
         {
             var key = Key(fileId);

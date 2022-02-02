@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+
+    <script src="https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.min.js"></script>
+</head>
+<body>
+    <input type="file" id="files" />
+
+    <script>
+        var input = document.getElementById('files');
+
+        input.addEventListener("change", (e) => {
+            const file = e.target.files[0]
+
+            let notPausedYet = true;
+
+            // Create a new tus upload
+            const upload = new tus.Upload(file, {
+                endpoint: "/files/",
+                retryDelays: [0, 3000, 5000, 10000, 20000],
+                metadata: {
+                    fileName: file.name,
+                    fileType: file.type
+                },
+                onError: error => {
+                    console.log(`Upload failed with ${error}.`);
+                },
+                onProgress: (bytesUploaded, bytesTotal) => {
+                    const percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
+
+                    if (percentage > 50 && percentage < 60 && notPausedYet) {
+                        upload.abort();
+                        startOrResumeUpload(upload);
+
+                        notPausedYet = false;
+                    }
+
+                    console.log(`Upload progress: ${bytesUploaded} of ${bytesTotal}, percent: ${percentage}.`);
+                },
+                onSuccess: () => {
+                    console.log(`Upload file ${upload.file.name} to ${upload.url} completed.`);
+                }
+            });
+
+            function startOrResumeUpload(upload) {
+                upload.findPreviousUploads().then((previousUploads) => {
+                    if (previousUploads.length) {
+                        upload.resumeFromPreviousUpload(previousUploads[0]);
+                    }
+
+                    upload.start()
+                })
+            }
+
+            startOrResumeUpload(upload);
+        });
+    </script>
+</body>
+</html>

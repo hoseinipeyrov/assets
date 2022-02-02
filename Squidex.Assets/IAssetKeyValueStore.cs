@@ -12,18 +12,21 @@ using System.Threading.Tasks;
 
 namespace Squidex.Assets
 {
-    public interface IKeyValueStore
+    public interface IAssetKeyValueStore<T>
     {
-        Task<T> GetAsync<T>(string id,
+        Task InitializeAsync(
             CancellationToken ct = default);
 
-        Task SetAsync<T>(string id, T value, DateTimeOffset expiration,
+        Task<T> GetAsync(string key,
             CancellationToken ct = default);
 
-        Task DeleteAsync(string id,
+        Task SetAsync(string key, T value, DateTimeOffset expiration,
             CancellationToken ct = default);
 
-        IAsyncEnumerable<(string Key, T Value)> GetExpiredEntriesAsync<T>(DateTimeOffset now,
+        Task DeleteAsync(string key,
+            CancellationToken ct = default);
+
+        IAsyncEnumerable<(string Key, T Value)> GetExpiredEntriesAsync(DateTimeOffset now,
             CancellationToken ct = default);
     }
 }

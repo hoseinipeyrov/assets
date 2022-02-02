@@ -36,50 +36,110 @@ namespace Squidex.Assets
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return -1;
+                return 0;
             }
 
-            return base.Read(buffer, offset, count);
+            try
+            {
+                return base.Read(buffer, offset, count);
+            }
+            catch
+            {
+                // Very ugly because it is not clear which exception is thrown here when the request is aborted. Also depends on Server (Kestrel, IIS).
+                return 0;
+            }
         }
 
         public override int Read(Span<byte> buffer)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return -1;
+                return 0;
             }
 
-            return base.Read(buffer);
+            try
+            {
+                return base.Read(buffer);
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
-        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return Task.FromResult(-1);
+                return 0;
             }
 
-            return base.ReadAsync(buffer, offset, count, cancellationToken);
+            try
+            {
+                return await base.ReadAsync(buffer, offset, count, default);
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
-        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return new ValueTask<int>(-1);
+                return 0;
             }
 
-            return base.ReadAsync(buffer, cancellationToken);
+            try
+            {
+                return await base.ReadAsync(buffer, default);
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         public override int ReadByte()
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return -1;
+                return 0;
             }
 
-            return base.ReadByte();
+            try
+            {
+                return base.ReadByte();
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        public override void CopyTo(Stream destination, int bufferSize)
+        {
+            try
+            {
+                base.CopyTo(destination, bufferSize);
+            }
+            catch
+            {
+                return;
+            }
+        }
+
+        public override async Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await base.CopyToAsync(destination, bufferSize, cancellationToken);
+            }
+            catch
+            {
+                return;
+            }
         }
     }
 }

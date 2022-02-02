@@ -9,7 +9,7 @@ using System;
 
 namespace Squidex.Assets
 {
-    public sealed class Metadata
+    public sealed class TusMetadata
     {
         public DateTimeOffset? Expiration { get; set; }
 
@@ -19,9 +19,9 @@ namespace Squidex.Assets
 
         public string UploadMetadata { get; set; }
 
-        public long BytesWritten { get; set; }
+        public long WrittenBytes { get; set; }
 
-        public int Parts { get; set; }
+        public int WrittenParts { get; set; }
 
         public bool Created { get; set; }
     }
