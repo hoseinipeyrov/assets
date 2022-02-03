@@ -13,6 +13,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Squidex.Assets.Internal;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Parsers;
@@ -25,6 +26,7 @@ namespace Squidex.Assets
         ITusCreationDeferLengthStore,
         ITusCreationStore,
         ITusReadableStore,
+        ITusTerminationStore,
         ITusStore
     {
         private static readonly TimeSpan DefaultExpiration = TimeSpan.FromDays(2);
@@ -65,7 +67,7 @@ namespace Squidex.Assets
         public async Task SetExpirationAsync(string fileId, DateTimeOffset expires,
             CancellationToken cancellationToken)
         {
-            var metadata = await GetMetadataAsync(fileId, cancellationToken);
+            var metadata = (await GetMetadataAsync(fileId, cancellationToken)) ?? new TusMetadata();
 
             metadata.Expires = expires;
 
@@ -75,19 +77,19 @@ namespace Squidex.Assets
         public async Task SetUploadLengthAsync(string fileId, long uploadLength,
             CancellationToken cancellationToken)
         {
-            var metadata = await GetMetadataAsync(fileId, cancellationToken);
+            var metadata = (await GetMetadataAsync(fileId, cancellationToken)) ?? new TusMetadata();
 
             metadata.UploadLength = uploadLength;
 
             await SetMetadataAsync(fileId, metadata, cancellationToken);
         }
 
-        public async Task<ITusFile> GetFileAsync(string fileId,
+        public async Task<ITusFile?> GetFileAsync(string fileId,
             CancellationToken cancellationToken)
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            if (metadata.WrittenParts == 0)
+            if (metadata == null || metadata.WrittenParts == 0)
             {
                 return null;
             }
@@ -150,7 +152,7 @@ namespace Squidex.Assets
         public async Task<long> AppendDataAsync(string fileId, Stream stream,
             CancellationToken cancellationToken)
         {
-            var metadata = await GetMetadataAsync(fileId, cancellationToken);
+            var metadata = (await GetMetadataAsync(fileId, cancellationToken)) ?? new TusMetadata();
 
             if (stream.GetLengthOrZero() > 0 && metadata.UploadLength.HasValue)
             {
@@ -200,7 +202,7 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            return metadata.WrittenBytes > 0 || metadata.Created;
+            return metadata != null && (metadata.WrittenBytes > 0 || metadata.Created);
         }
 
         public async Task<IEnumerable<string>> GetExpiredFilesAsync(
@@ -223,15 +225,15 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            return metadata.UploadLength;
+            return metadata?.UploadLength;
         }
 
-        public async Task<string> GetUploadMetadataAsync(string fileId,
+        public async Task<string?> GetUploadMetadataAsync(string fileId,
             CancellationToken cancellationToken)
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            return metadata.UploadMetadata;
+            return metadata?.UploadMetadata;
         }
 
         public async Task<long> GetUploadOffsetAsync(string fileId,
@@ -239,7 +241,7 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            return metadata.WrittenBytes;
+            return metadata?.WrittenBytes ?? 0;
         }
 
         public async Task<DateTimeOffset?> GetExpirationAsync(string fileId,
@@ -247,15 +249,15 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            return metadata.Expires;
+            return metadata?.Expires;
         }
 
-        private async Task<TusMetadata> GetMetadataAsync(string fileId,
+        private async Task<TusMetadata?> GetMetadataAsync(string fileId,
             CancellationToken ct)
         {
             var key = Key(fileId);
 
-            return (await assetKeyValueStore.GetAsync(key, ct)) ?? new TusMetadata { Id = fileId };
+            return await assetKeyValueStore.GetAsync(key, ct);
         }
 
         public async Task<int> RemoveExpiredFilesAsync(
@@ -271,6 +273,18 @@ namespace Squidex.Assets
             }
 
             return deletionCount;
+        }
+
+        public async Task DeleteFileAsync(string fileId, CancellationToken cancellationToken)
+        {
+            var metadata = await GetMetadataAsync(fileId, cancellationToken);
+
+            if (metadata == null)
+            {
+                return;
+            }
+
+            await CleanupAsync(metadata, cancellationToken);
         }
 
         private async Task CleanupAsync(TusMetadata metadata, CancellationToken cancellationToken)
@@ -295,7 +309,7 @@ namespace Squidex.Assets
                 metadata.Expires = DateTimeOffset.UtcNow.Add(DefaultExpiration);
             }
 
-            return assetKeyValueStore.SetAsync(key, metadata, metadata.Expires.Value, ct);
+            return assetKeyValueStore.SetAsync(key, metadata, metadata.Expires!.Value, ct);
         }
 
         private static string PartName(string fileId, int index)

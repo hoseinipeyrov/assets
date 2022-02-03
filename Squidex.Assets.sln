@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.TusAdapter",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TusTestServer", "TusTestServer\TusTestServer.csproj", "{53FAD161-D0A5-4920-94DA-E5C88D48B707}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tusdotnet", "..\..\_other\tusdotnet\Source\tusdotnet\tusdotnet.csproj", "{A52CBE7F-1AE8-4BE8-9DAE-3B7ED3A838A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{53FAD161-D0A5-4920-94DA-E5C88D48B707}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{53FAD161-D0A5-4920-94DA-E5C88D48B707}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{53FAD161-D0A5-4920-94DA-E5C88D48B707}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A52CBE7F-1AE8-4BE8-9DAE-3B7ED3A838A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A52CBE7F-1AE8-4BE8-9DAE-3B7ED3A838A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A52CBE7F-1AE8-4BE8-9DAE-3B7ED3A838A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A52CBE7F-1AE8-4BE8-9DAE-3B7ED3A838A0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

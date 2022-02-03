@@ -42,7 +42,7 @@ namespace Squidex.Assets
             }));
         }
 
-        public async Task<AssetTusFile> InvokeAsync(HttpContext httpContext, string baseUrl)
+        public async Task<AssetTusFile?> InvokeAsync(HttpContext httpContext, string baseUrl)
         {
             httpContext.Items["TUS_BASEURL"] = baseUrl;
 

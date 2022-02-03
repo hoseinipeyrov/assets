@@ -43,10 +43,6 @@ builder.Services.AddSingleton<MongoGridFsAssetStore>(
     new MongoGridFsAssetStore(gridFSBucket));
 builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<MongoGridFsAssetStore>());
 
-builder.Services.AddSingleton<FolderAssetStore>(
-    c => ActivatorUtilities.CreateInstance<FolderAssetStore>(c, "uploads"));
-builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<FolderAssetStore>());
-
 builder.Services.AddSingleton<AmazonS3AssetStore>(
     c => ActivatorUtilities.CreateInstance<AmazonS3AssetStore>(c,
         builder.Configuration.GetSection("amazonS3").Get<AmazonS3AssetOptions>()));
@@ -61,6 +57,10 @@ builder.Services.AddSingleton<GoogleCloudAssetStore>(
     c => ActivatorUtilities.CreateInstance<GoogleCloudAssetStore>(c,
         builder.Configuration.GetSection("googleCloud").Get<GoogleCloudAssetOptions>()));
 builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<GoogleCloudAssetStore>());
+
+builder.Services.AddSingleton<FolderAssetStore>(
+    c => ActivatorUtilities.CreateInstance<FolderAssetStore>(c, "uploads"));
+builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<FolderAssetStore>());
 
 builder.Services.AddSingleton<IAssetKeyValueStore<TusMetadata>,
     MongoAssetKeyValueStore<TusMetadata>>();

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+	<Nullable>enable</Nullable>
     <RootNamespace>Squidex.Assets</RootNamespace>
   </PropertyGroup>
 
@@ -16,8 +17,7 @@
     </PackageReference>
     <PackageReference Include="MongoDB.Driver.GridFS" Version="2.13.3" />
     <PackageReference Include="RefactoringEssentials" Version="5.6.0" PrivateAssets="all" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
-    <PackageReference Include="tusdotnet" Version="2.5.0" />
+	  <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\_other\tusdotnet\Source\tusdotnet\tusdotnet.csproj" />
     <ProjectReference Include="..\Squidex.Assets\Squidex.Assets.csproj" />
   </ItemGroup>
 
