@@ -30,12 +30,12 @@ namespace Squidex.Assets
         private static readonly TimeSpan DefaultExpiration = TimeSpan.FromDays(2);
         private readonly ConcurrentDictionary<string, Task<AssetTusFile>> files = new ConcurrentDictionary<string, Task<AssetTusFile>>();
         private readonly IAssetStore assetStore;
-        private readonly IAssetKeyValueStore<TusMetadata> keyValueStore;
+        private readonly IAssetKeyValueStore<TusMetadata> assetKeyValueStore;
 
         public AssetTusStore(IAssetStore assetStore, IAssetKeyValueStore<TusMetadata> keyValueStore)
         {
             this.assetStore = assetStore;
-            this.keyValueStore = keyValueStore;
+            this.assetKeyValueStore = keyValueStore;
         }
 
         public async Task<string> CreateFileAsync(long uploadLength, string metadata,
@@ -48,7 +48,7 @@ namespace Squidex.Assets
                 Created = true,
                 UploadLength = uploadLength,
                 UploadMetadata = metadata,
-                Expiration = DateTimeOffset.UtcNow.Add(DefaultExpiration)
+                Expires = DateTimeOffset.UtcNow.Add(DefaultExpiration)
             };
 
             await SetMetadataAsync(id, metadataObj, cancellationToken);
@@ -67,7 +67,7 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            metadata.Expiration = expires;
+            metadata.Expires = expires;
 
             await SetMetadataAsync(fileId, metadata, cancellationToken);
         }
@@ -118,10 +118,12 @@ namespace Squidex.Assets
                 });
             }
 
-            return await files.GetOrAdd(fileId, x =>
+#pragma warning disable MA0106 // Avoid closure by using an overload with the 'factoryArgument' parameter
+            return await files.GetOrAdd(fileId, (x, args) =>
             {
-                return CreateFileAsync(x, metadata, cancellationToken);
-            });
+                return CreateFileAsync(x, args.metadata, args.cancellationToken);
+            }, (metadata, cancellationToken));
+#pragma warning restore MA0106 // Avoid closure by using an overload with the 'factoryArgument' parameter
         }
 
         public async Task<bool> VerifyChecksumAsync(string fileId, string algorithm, byte[] checksum,
@@ -138,7 +140,7 @@ namespace Squidex.Assets
             {
                 using (var sha1 = SHA1.Create())
                 {
-                    var calculateSha1 = sha1.ComputeHash(dataStream);
+                    var calculateSha1 = await sha1.ComputeHashAsync(dataStream, cancellationToken);
 
                     return checksum.SequenceEqual(calculateSha1);
                 }
@@ -206,7 +208,7 @@ namespace Squidex.Assets
         {
             var result = new List<string>();
 
-            var expirations = keyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
+            var expirations = assetKeyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
 
             await foreach (var (_, value) in expirations.WithCancellation(cancellationToken))
             {
@@ -245,15 +247,15 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            return metadata.Expiration;
+            return metadata.Expires;
         }
 
-        private Task<TusMetadata> GetMetadataAsync(string fileId,
+        private async Task<TusMetadata> GetMetadataAsync(string fileId,
             CancellationToken ct)
         {
             var key = Key(fileId);
 
-            return keyValueStore.GetAsync(key, ct);
+            return (await assetKeyValueStore.GetAsync(key, ct)) ?? new TusMetadata { Id = fileId };
         }
 
         public async Task<int> RemoveExpiredFilesAsync(
@@ -261,7 +263,7 @@ namespace Squidex.Assets
         {
             var deletionCount = 0;
 
-            var expirations = keyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
+            var expirations = assetKeyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
 
             await foreach (var (_, expiration) in expirations.WithCancellation(cancellationToken))
             {
@@ -278,7 +280,7 @@ namespace Squidex.Assets
                 await assetStore.DeleteAsync(PartName(metadata.Id, i), cancellationToken);
             }
 
-            await keyValueStore.DeleteAsync(Key(metadata.Id), cancellationToken);
+            await assetKeyValueStore.DeleteAsync(Key(metadata.Id), cancellationToken);
         }
 
         private Task SetMetadataAsync(string fileId, TusMetadata metadata,
@@ -288,12 +290,12 @@ namespace Squidex.Assets
 
             metadata.Id = fileId;
 
-            if (metadata.Expiration == default)
+            if (metadata.Expires == default)
             {
-                metadata.Expiration = DateTimeOffset.UtcNow.Add(DefaultExpiration);
+                metadata.Expires = DateTimeOffset.UtcNow.Add(DefaultExpiration);
             }
 
-            return keyValueStore.SetAsync(key, metadata, metadata.Expiration.Value, ct);
+            return assetKeyValueStore.SetAsync(key, metadata, metadata.Expires.Value, ct);
         }
 
         private static string PartName(string fileId, int index)
@@ -301,7 +303,7 @@ namespace Squidex.Assets
             return $"{fileId}_{index}";
         }
 
-        private string Key(string fileId)
+        private static string Key(string fileId)
         {
             return $"TUSFILE_{fileId}";
         }

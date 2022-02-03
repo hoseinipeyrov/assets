@@ -26,11 +26,18 @@ var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptio
     BucketName = "fs"
 });
 
+builder.Services.AddMvc();
+
 builder.Services.AddSingleton<IMongoDatabase>(
     mongoDatabase);
 
 builder.Services.AddSingleton<IHostedService,
     Initializer>();
+
+builder.Services.AddSingleton<AssetTusRunner,
+    AssetTusRunner>();
+builder.Services.AddSingleton<AssetTusStore,
+    AssetTusStore>();
 
 builder.Services.AddSingleton<MongoGridFsAssetStore>(
     new MongoGridFsAssetStore(gridFSBucket));
@@ -76,5 +83,11 @@ app.UseMyTus<GoogleCloudAssetStore>(
     "/files/google-cloud/");
 
 app.UseStaticFiles();
+
+app.UseRouting();
+app.UseEndpoints(builder =>
+{
+    builder.MapControllers();
+});
 
 app.Run();

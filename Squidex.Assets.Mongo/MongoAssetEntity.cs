@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Squidex.Assets
@@ -15,8 +16,10 @@ namespace Squidex.Assets
         [BsonId]
         public string Key { get; set; }
 
+        [BsonIgnoreIfDefault]
         public T Value { get; set; }
 
-        public DateTimeOffset Expires { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public DateTime Expires { get; set; }
     }
 }

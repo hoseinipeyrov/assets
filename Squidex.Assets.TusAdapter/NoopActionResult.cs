@@ -5,24 +5,16 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Squidex.Assets
 {
-    public sealed class TusMetadata
+    public sealed class NoopActionResult : IActionResult
     {
-        public DateTimeOffset? Expires { get; set; }
-
-        public string Id { get; set; }
-
-        public long? UploadLength { get; set; }
-
-        public string UploadMetadata { get; set; }
-
-        public long WrittenBytes { get; set; }
-
-        public int WrittenParts { get; set; }
-
-        public bool Created { get; set; }
+        public Task ExecuteResultAsync(ActionContext context)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

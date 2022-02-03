@@ -26,11 +26,11 @@ namespace TusTestServer
                 {
                     OnFileCompleteAsync = async eventContext =>
                     {
-                        var fileObject = (AssetFile)(await eventContext.GetFileAsync());
+                        var file = (AssetFile)(await eventContext.GetFileAsync());
 
-                        await using var fileStream = fileObject.OpenRead();
+                        await using var fileStream = file.OpenRead();
 
-                        var name = fileObject.FileName;
+                        var name = file.FileName;
 
                         if (string.IsNullOrWhiteSpace(name))
                         {

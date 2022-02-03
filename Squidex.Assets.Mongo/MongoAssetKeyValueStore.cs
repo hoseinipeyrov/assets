@@ -17,7 +17,7 @@ namespace Squidex.Assets
 {
     public sealed class MongoAssetKeyValueStore<T> : IAssetKeyValueStore<T>
     {
-        private readonly ReplaceOptions upsert = new ReplaceOptions
+        private readonly UpdateOptions upsert = new UpdateOptions
         {
             IsUpsert = true
         };
@@ -62,7 +62,9 @@ namespace Squidex.Assets
         public async IAsyncEnumerable<(string Key, T Value)> GetExpiredEntriesAsync(DateTimeOffset now,
             [EnumeratorCancellation] CancellationToken ct = default)
         {
-            var entities = await collection.Find(x => x.Expires < now).ToCursorAsync(ct);
+            var utcNow = now.UtcDateTime;
+
+            var entities = await collection.Find(x => x.Expires < utcNow).ToCursorAsync(ct);
 
             while (await entities.MoveNextAsync(ct))
             {
@@ -73,12 +75,16 @@ namespace Squidex.Assets
             }
         }
 
-        public Task SetAsync(string key, T value, DateTimeOffset expiration,
+        public Task SetAsync(string key, T value, DateTimeOffset expires,
             CancellationToken ct = default)
         {
-            var entity = new MongoAssetEntity<T> { Key = key, Value = value, Expires = expiration };
+            var utcExpires = expires.UtcDateTime;
 
-            return collection.ReplaceOneAsync(x => x.Key == key, entity, upsert, ct);
+            return collection.UpdateOneAsync(x => x.Key == key,
+                Builders<MongoAssetEntity<T>>.Update
+                    .Set(x => x.Expires, utcExpires)
+                    .Set(x => x.Value, value),
+                upsert, ct);
         }
     }
 }

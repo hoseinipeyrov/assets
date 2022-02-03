@@ -10,6 +10,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
+
 namespace Squidex.Assets
 {
     public sealed class CancellableStream : DelegateStream
