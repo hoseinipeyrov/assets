@@ -5,8 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using tusdotnet;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
@@ -42,13 +44,28 @@ namespace Squidex.Assets
             }));
         }
 
-        public async Task<AssetTusFile?> InvokeAsync(HttpContext httpContext, string baseUrl)
+        public async Task<(IActionResult Result, AssetTusFile? File)> InvokeAsync(HttpContext httpContext, string baseUrl)
         {
+            var customContext = new DefaultHttpContext(httpContext.Features);
+
+            // override the body for error messages from TUS middleware.
+            customContext.Response.Body = new MemoryStream();
+
+            customContext.Request.Method = httpContext.Request.Method;
+            customContext.Request.Body = httpContext.Request.Body;
+
+            foreach (var (key, value) in httpContext.Request.Headers)
+            {
+                customContext.Request.Headers[key] = value;
+            }
+
             httpContext.Items["TUS_BASEURL"] = baseUrl;
 
-            await middleware.Invoke(httpContext);
+            await middleware.Invoke(customContext);
 
-            return httpContext.Items["TUS_FILE"] as AssetTusFile;
+            var file = httpContext.Items["TUS_FILE"] as AssetTusFile;
+
+            return (new TusResult(customContext.Response), file);
         }
     }
 }

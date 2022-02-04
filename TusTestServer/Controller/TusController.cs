@@ -57,11 +57,11 @@ namespace TusTestServer.Controller
         [Route("files/controller/{**catchAll}")]
         public async Task<IActionResult> Tus()
         {
-            var file = await runner.InvokeAsync(HttpContext, Url.Action(null, new { catchAll = (string?)null })!);
+            var (result, file) = await runner.InvokeAsync(HttpContext, Url.Action(null, new { catchAll = (string?)null })!);
 
             if (file == null)
             {
-                return new EmptyResult();
+                return result;
             }
 
             await using var fileStream = file.OpenRead();
