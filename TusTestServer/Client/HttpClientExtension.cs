@@ -7,9 +7,10 @@
 
 using System.Globalization;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.Net.Http.Headers;
+
+#pragma warning disable MA0048 // File name must match type name
 
 namespace TusTestServer.Client
 {

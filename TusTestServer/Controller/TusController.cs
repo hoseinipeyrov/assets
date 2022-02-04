@@ -45,7 +45,7 @@ namespace TusTestServer.Controller
                     }
                 }, cts.Token);
 
-                await Task.Delay(1000);
+                await Task.Delay(1000, default);
 
                 if (cts.IsCancellationRequested)
                 {

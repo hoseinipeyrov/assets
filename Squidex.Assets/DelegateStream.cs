@@ -104,12 +104,14 @@ namespace Squidex.Assets
             return innerStream.ReadByte();
         }
 
-        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count,
+            CancellationToken cancellationToken)
         {
             return innerStream.ReadAsync(buffer, offset, count, cancellationToken);
         }
 
-        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
         {
             return innerStream.ReadAsync(buffer, cancellationToken);
         }
@@ -154,12 +156,14 @@ namespace Squidex.Assets
             innerStream.WriteByte(value);
         }
 
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public override Task WriteAsync(byte[] buffer, int offset, int count,
+            CancellationToken cancellationToken)
         {
             return innerStream.WriteAsync(buffer, offset, count, cancellationToken);
         }
 
-        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer,
+            CancellationToken cancellationToken = default)
         {
             return innerStream.WriteAsync(buffer, cancellationToken);
         }
@@ -174,7 +178,8 @@ namespace Squidex.Assets
             innerStream.EndWrite(asyncResult);
         }
 
-        public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
+        public override Task CopyToAsync(Stream destination, int bufferSize,
+            CancellationToken cancellationToken)
         {
             return innerStream.CopyToAsync(destination, bufferSize, cancellationToken);
         }

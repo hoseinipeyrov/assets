@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Squidex.Assets
 {
-    internal static class AssetStorageException
+    internal static class AssetStorageExtensions
     {
         public static async Task UploadAndResetAsync(this IAssetStore assetStore, string name, Stream stream)
         {

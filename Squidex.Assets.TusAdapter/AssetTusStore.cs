@@ -94,7 +94,8 @@ namespace Squidex.Assets
                 return null;
             }
 
-            async Task<AssetTusFile> CreateFileAsync(string fileId, TusMetadata metadata, CancellationToken cancellationToken)
+            async Task<AssetTusFile> CreateFileAsync(string fileId, TusMetadata metadata,
+                CancellationToken ct)
             {
                 var tempPath = Path.Combine(Path.GetTempPath(), Key(fileId));
 
@@ -107,7 +108,7 @@ namespace Squidex.Assets
 
                 for (var i = 0; i < metadata.WrittenParts; i++)
                 {
-                    await assetStore.DownloadAsync(PartName(fileId, i), tempStream, default, cancellationToken);
+                    await assetStore.DownloadAsync(PartName(fileId, i), tempStream, default, ct);
                 }
 
                 var parsedMetadata = MetadataParser.ParseAndValidate(MetadataParsingStrategy.AllowEmptyValues, metadata.UploadMetadata).Metadata;
