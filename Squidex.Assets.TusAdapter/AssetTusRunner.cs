@@ -17,6 +17,8 @@ namespace Squidex.Assets
 {
     public sealed class AssetTusRunner
     {
+        private const string TusFile = "TUS_FILE";
+        private const string TusUrl = "TUS_FILE";
         private readonly TusCoreMiddleware middleware;
 
         public AssetTusRunner(AssetTusStore tusStore)
@@ -29,7 +31,7 @@ namespace Squidex.Assets
 
                     if (file is AssetTusFile tusFile)
                     {
-                        eventContext.HttpContext.Items["TUS_FILE"] = file;
+                        eventContext.HttpContext.Items[TusFile] = file;
                     }
                 }
             };
@@ -37,35 +39,44 @@ namespace Squidex.Assets
             middleware = new TusCoreMiddleware(_ => Task.CompletedTask, ctx => Task.FromResult(new DefaultTusConfiguration
             {
                 Store = tusStore,
-                MaxAllowedUploadSizeInBytes = null,
-                MaxAllowedUploadSizeInBytesLong = null,
+
+                // Reuse the events to avoid allocations.
                 Events = events,
-                UrlPath = ctx.Items["TUS_BASEURL"]!.ToString()
+
+                // Get the url from the controller that is temporarily stored in the items.
+                UrlPath = ctx.Items[TusUrl]!.ToString()
             }));
         }
 
         public async Task<(IActionResult Result, AssetTusFile? File)> InvokeAsync(HttpContext httpContext, string baseUrl)
         {
+            var customContext = BuildCustomContext(httpContext, baseUrl);
+
+            await middleware.Invoke(customContext);
+
+            var file = customContext.Items[TusFile] as AssetTusFile;
+
+            return (new TusResult(customContext.Response), file);
+        }
+
+        private static DefaultHttpContext BuildCustomContext(HttpContext httpContext, string baseUrl)
+        {
+            // Features transport a lot of logic, such as items and pipe readers and so on.
             var customContext = new DefaultHttpContext(httpContext.Features);
 
-            // override the body for error messages from TUS middleware.
+            // Override the body for error messages from TUS middleware. They are usually small so buffering here is okay.
             customContext.Response.Body = new MemoryStream();
 
             customContext.Request.Method = httpContext.Request.Method;
             customContext.Request.Body = httpContext.Request.Body;
+            customContext.Items[TusUrl] = baseUrl;
 
             foreach (var (key, value) in httpContext.Request.Headers)
             {
                 customContext.Request.Headers[key] = value;
             }
 
-            httpContext.Items["TUS_BASEURL"] = baseUrl;
-
-            await middleware.Invoke(customContext);
-
-            var file = httpContext.Items["TUS_FILE"] as AssetTusFile;
-
-            return (new TusResult(customContext.Response), file);
+            return customContext;
         }
     }
 }
