@@ -5,20 +5,21 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Net.Http.Headers;
+using Squidex.Assets.Internal;
 
-#pragma warning disable MA0048 // File name must match type name
-
-namespace TusTestServer.Client
+namespace Squidex.Assets
 {
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
-    public sealed record UploadFile(Stream Stream, string FileName, string MimeType);
-#pragma warning restore SA1313 // Parameter names should begin with lower-case letter
-
-    public static class HttpClientExtension
+    public static class UploadHttpClientExtension
     {
         private static class TusHeaders
         {
@@ -30,22 +31,42 @@ namespace TusTestServer.Client
             public const string UploadMetadata = "Upload-Metadata";
         }
 
-        public static Task UploadWithProgressAsync(this HttpClient httpClient, Uri uri, FileInfo file, string? fileId = null, IProgressHandler? handler = null,
+        public static Task UploadWithProgressAsync(this HttpClient httpClient, string url, UploadFile file, string? fileId = null, IProgressHandler? handler = null,
             CancellationToken ct = default)
         {
-            var uploadFile = new UploadFile(file.OpenRead(), file.Name, file.Name);
+            if (url == null)
+            {
+                throw new ArgumentNullException(nameof(url));
+            }
 
-            return httpClient.UploadWithProgressAsync(uri, uploadFile, fileId, handler, ct);
+            if (file == null)
+            {
+                throw new ArgumentNullException(nameof(file));
+            }
+
+            var uri = new Uri(url, UriKind.RelativeOrAbsolute);
+
+            return httpClient.UploadWithProgressAsync(uri, file, fileId, handler, ct);
         }
 
         public static async Task UploadWithProgressAsync(this HttpClient httpClient, Uri uri, UploadFile file, string? fileId = null, IProgressHandler? handler = null,
             CancellationToken ct = default)
         {
+            if (uri == null)
+            {
+                throw new ArgumentNullException(nameof(uri));
+            }
+
+            if (file == null)
+            {
+                throw new ArgumentNullException(nameof(file));
+            }
+
             handler ??= new DelegatingProgressHandler();
 
             try
             {
-                var totalProgress = 0L;
+                var totalProgress = 0;
                 var totalBytes = file.Stream.Length;
                 var bytesWritten = 0L;
 
@@ -66,15 +87,23 @@ namespace TusTestServer.Client
 
                 var url = GetFileIdUrl(uri, fileId);
 
-                var content = new ProgressableStreamContent(file.Stream, async bytesWritten =>
+                var content = new ProgressableStreamContent(file.Stream, async bytes =>
                 {
-                    var newProgress = (long)Math.Floor(100 * (double)bytesWritten / totalBytes);
+                    bytesWritten = bytes;
+
+                    if (bytesWritten == totalBytes)
+                    {
+                        await handler.OnProgressAsync(new UploadProgressEvent(fileId!, 100, totalBytes, totalBytes));
+                        return;
+                    }
+
+                    var newProgress = (int)Math.Floor(100 * (double)bytesWritten / totalBytes);
 
                     if (newProgress != totalProgress)
                     {
                         totalProgress = newProgress;
 
-                        await handler.OnProgressAsync(new UploadProgressEvent(fileId!, totalProgress, bytesWritten, totalBytes));
+                        await handler.OnProgressAsync(new UploadProgressEvent(fileId!, totalProgress, bytes, totalBytes));
                     }
                 });
 
@@ -89,10 +118,12 @@ namespace TusTestServer.Client
 
                 response.EnsureSuccessStatusCode();
 
-                await handler.OnProgressAsync(new UploadProgressEvent(fileId!, 100, totalBytes, totalBytes));
-                await handler.OnCompletedAsync(new UploadCompletedEvent(fileId!, response));
+                if (bytesWritten == totalBytes)
+                {
+                    await handler.OnCompletedAsync(new UploadCompletedEvent(fileId!, response));
 
-                await httpClient.TerminateAsync(url, default);
+                    await httpClient.TerminateAsync(url, default);
+                }
             }
             catch (Exception ex)
             {
@@ -134,6 +165,30 @@ namespace TusTestServer.Client
             var locationValue = location.First().Split('/', StringSplitOptions.RemoveEmptyEntries);
 
             return locationValue[^1];
+        }
+
+        public static Task<bool> DeleteUploadAsync(this HttpClient httpClient, string url, string fileId,
+          CancellationToken ct = default)
+        {
+            if (url == null)
+            {
+                throw new ArgumentNullException(nameof(url));
+            }
+
+            var uri = new Uri(url, UriKind.RelativeOrAbsolute);
+
+            return httpClient.DeleteUploadAsync(uri, fileId, ct);
+        }
+
+        public static async Task<bool> DeleteUploadAsync(this HttpClient httpClient, Uri uri, string fileId,
+            CancellationToken ct = default)
+        {
+            if (uri == null)
+            {
+                throw new ArgumentNullException(nameof(uri));
+            }
+
+            return await TerminateAsync(httpClient, GetFileIdUrl(uri, fileId), ct);
         }
 
         private static async Task<bool> TerminateAsync(this HttpClient httpClient, string url,

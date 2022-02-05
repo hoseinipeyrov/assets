@@ -5,10 +5,14 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using tusdotnet;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
@@ -50,31 +54,49 @@ namespace Squidex.Assets
 
         public async Task<(IActionResult Result, AssetTusFile? File)> InvokeAsync(HttpContext httpContext, string baseUrl)
         {
-            var customContext = BuildCustomContext(httpContext, baseUrl);
+            var customContext = CloneContext(httpContext, baseUrl);
 
             await middleware.Invoke(customContext);
 
-            var file = customContext.Items[TusFile] as AssetTusFile;
-
-            return (new TusResult(customContext.Response), file);
+            return (new TusActionResult(customContext.Response), customContext.Items[TusFile] as AssetTusFile);
         }
 
-        private static DefaultHttpContext BuildCustomContext(HttpContext httpContext, string baseUrl)
+        // From: https://github.com/dotnet/aspnetcore/blob/main/src/SignalR/common/Http.Connections/src/Internal/HttpConnectionDispatcher.cs#L509
+        private static DefaultHttpContext CloneContext(HttpContext httpContext, string baseUrl)
         {
-            // Features transport a lot of logic, such as items and pipe readers and so on.
-            var customContext = new DefaultHttpContext(httpContext.Features);
+            // The reason we're copying the base features instead of the HttpContext properties is
+            // so that we can get all of the logic built into DefaultHttpContext to extract higher level
+            // structure from the low level properties
+            var existingRequestFeature = httpContext.Features.Get<IHttpRequestFeature>()!;
+
+            // Create a clone of the headers.
+            var requestHeaders = new Dictionary<string, StringValues>(existingRequestFeature.Headers, StringComparer.OrdinalIgnoreCase);
+
+            var requestFeature = new HttpRequestFeature
+            {
+                Body = existingRequestFeature.Body,
+                Headers = new HeaderDictionary(requestHeaders),
+                Method = existingRequestFeature.Method,
+                Path = existingRequestFeature.Path,
+                PathBase = existingRequestFeature.PathBase,
+                Protocol = existingRequestFeature.Protocol,
+                QueryString = existingRequestFeature.QueryString,
+                Scheme = existingRequestFeature.Scheme
+            };
+
+            var responseFeature = new HttpResponseFeature();
+
+            var features = new FeatureCollection();
+            features.Set(httpContext.Features.Get<IRequestBodyPipeFeature>());
+            features.Set<IHttpRequestFeature>(requestFeature);
+            features.Set<IHttpResponseFeature>(responseFeature);
 
             // Override the body for error messages from TUS middleware. They are usually small so buffering here is okay.
-            customContext.Response.Body = new MemoryStream();
+            features.Set<IHttpResponseBodyFeature>(new StreamResponseBodyFeature(new MemoryStream()));
 
-            customContext.Request.Method = httpContext.Request.Method;
-            customContext.Request.Body = httpContext.Request.Body;
+            var customContext = new DefaultHttpContext(features);
+
             customContext.Items[TusUrl] = baseUrl;
-
-            foreach (var (key, value) in httpContext.Request.Headers)
-            {
-                customContext.Request.Headers[key] = value;
-            }
 
             return customContext;
         }

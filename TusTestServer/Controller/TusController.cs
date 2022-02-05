@@ -7,13 +7,13 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Squidex.Assets;
-using TusTestServer.Client;
 
 namespace TusTestServer.Controller
 {
     public class TusController : ControllerBase
     {
         private readonly AssetTusRunner runner;
+        private readonly Uri uploadUri = new Uri("http://localhost:5010/files/controller");
         private string? fileId;
 
         public TusController(AssetTusRunner runner)
@@ -26,11 +26,11 @@ namespace TusTestServer.Controller
         {
             using (var httpClient = new HttpClient())
             {
-                var file = new FileInfo("wwwroot/LargeImage.jpg");
+                var file = UploadFile.FromPath("wwwroot/LargeImage.jpg");
 
-                var cts = new CancellationTokenSource();
+                using var cts = new CancellationTokenSource();
 
-                await httpClient.UploadWithProgressAsync(new Uri("http://localhost:5010/files/controller"), file, null, new DelegatingProgressHandler
+                await httpClient.UploadWithProgressAsync(uploadUri, file, null, new DelegatingProgressHandler
                 {
                     OnProgressAsync = @event =>
                     {
@@ -49,7 +49,7 @@ namespace TusTestServer.Controller
 
                 if (cts.IsCancellationRequested)
                 {
-                    await httpClient.UploadWithProgressAsync(new Uri("http://localhost:5010/files/controller"), file, fileId, ct: default);
+                    await httpClient.UploadWithProgressAsync(uploadUri, file, fileId, ct: default);
                 }
             }
         }

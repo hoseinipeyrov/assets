@@ -12,11 +12,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Squidex.Assets
 {
-    internal sealed class TusResult : IActionResult
+    internal sealed class TusActionResult : IActionResult
     {
         private readonly HttpResponse response;
 
-        public TusResult(HttpResponse response)
+        public TusActionResult(HttpResponse response)
         {
             this.response = response;
         }

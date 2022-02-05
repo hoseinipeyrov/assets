@@ -5,7 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace TusTestServer.Client
+using System;
+using System.Threading.Tasks;
+
+namespace Squidex.Assets
 {
     public sealed class DelegatingProgressHandler : IProgressHandler
     {

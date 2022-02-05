@@ -5,14 +5,20 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System;
+using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace TusTestServer.Client
+namespace Squidex.Assets.Internal
 {
     internal sealed class ProgressableStreamContent : HttpContent
     {
         private readonly Stream content;
         private readonly int uploadBufferSize;
+        private readonly long uploadLength;
         private readonly Func<long, Task> uploadProgress;
 
         public ProgressableStreamContent(Stream content, Func<long, Task> uploadProgress)
@@ -25,6 +31,8 @@ namespace TusTestServer.Client
             this.content = content;
             this.uploadBufferSize = uploadBufferSize;
             this.uploadProgress = uploadProgress;
+
+            uploadLength = content.Length - content.Position;
         }
 
         protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
@@ -60,7 +68,7 @@ namespace TusTestServer.Client
 
         protected override bool TryComputeLength(out long length)
         {
-            length = content.Length - content.Position;
+            length = uploadLength;
 
             return true;
         }
