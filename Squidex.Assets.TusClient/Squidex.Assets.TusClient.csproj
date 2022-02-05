@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="logo-squared.png" />
+    <None Include="logo-squared.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
