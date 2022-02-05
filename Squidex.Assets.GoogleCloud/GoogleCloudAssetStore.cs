@@ -116,7 +116,12 @@ namespace Squidex.Assets
             {
                 var result = await storageClient.UploadObjectAsync(bucketName, name, "application/octet-stream", stream, overwrite ? null : IfNotExists, ct);
 
-                return (long)(result.Size ?? 0L);
+                if (result.Size.HasValue)
+                {
+                    return (long)result.Size.Value;
+                }
+
+                return -1;
             }
             catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.PreconditionFailed)
             {
