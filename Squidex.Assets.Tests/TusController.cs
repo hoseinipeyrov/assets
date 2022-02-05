@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Squidex.Assets
@@ -22,7 +21,7 @@ namespace Squidex.Assets
         [Route("files/controller/{**catchAll}")]
         public async Task<IActionResult> Tus()
         {
-            var (result, file) = await runner.InvokeAsync(HttpContext, Url.Action(null, new { catchAll = (string)null })!);
+            var (result, file) = await runner.InvokeAsync(HttpContext, Url.Action(null, new { catchAll = (string?)null })!);
 
             if (file != null)
             {

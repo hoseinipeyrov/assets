@@ -5,12 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-using System.IO;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
 using Google;
 using Google.Cloud.Storage.V1;
 using Squidex.Assets.Internal;
@@ -120,7 +116,7 @@ namespace Squidex.Assets
             {
                 var result = await storageClient.UploadObjectAsync(bucketName, name, "application/octet-stream", stream, overwrite ? null : IfNotExists, ct);
 
-                return (long)result.Size.Value;
+                return (long)(result.Size ?? 0L);
             }
             catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.PreconditionFailed)
             {

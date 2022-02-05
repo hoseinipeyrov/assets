@@ -5,13 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
@@ -36,7 +29,7 @@ namespace Squidex.Assets
         {
             var image = GetImage("logo.png");
 
-            var reportedException = (Exception)null;
+            var reportedException = (Exception?)null;
 
             await _.Client.UploadWithProgressAsync(new Uri("/404", UriKind.Relative), image, null, new DelegatingProgressHandler
             {

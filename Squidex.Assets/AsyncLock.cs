@@ -5,10 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 #pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
 
 namespace Squidex.Assets

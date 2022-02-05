@@ -2,7 +2,8 @@
 
   <PropertyGroup>
 	<TargetFramework>netstandard2.1</TargetFramework>
-	<Nullable>enable</Nullable>
+	<LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
     <RootNamespace>Squidex.Assets</RootNamespace>
   </PropertyGroup>
 

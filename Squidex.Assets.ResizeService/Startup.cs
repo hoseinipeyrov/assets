@@ -5,8 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Assets;
-
 namespace Squidex.Assets.ResizeService
 {
     public sealed class Startup

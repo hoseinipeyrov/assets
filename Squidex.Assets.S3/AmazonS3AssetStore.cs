@@ -5,10 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.IO;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -231,7 +228,7 @@ namespace Squidex.Assets
                     BucketName = options.Bucket
                 };
 
-                string continuationToken = null;
+                string? continuationToken = null;
 
                 while (!ct.IsCancellationRequested)
                 {

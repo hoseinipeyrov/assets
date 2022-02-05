@@ -5,11 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.IO.Compression;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Squidex.Assets
@@ -429,10 +425,10 @@ namespace Squidex.Assets
 
             var archive2 = new ZipArchive(memoryStream, ZipArchiveMode.Read);
 
-            return archive2.GetEntry("test").Open();
+            return archive2.GetEntry("test")!.Open();
         }
 
-        private static string GetPath(TestCase testCase, string folder = null, string file = null)
+        private static string GetPath(TestCase testCase, string? folder = null, string? file = null)
         {
             file ??= Guid.NewGuid().ToString();
 

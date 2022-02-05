@@ -5,10 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
 using FakeItEasy;
 using FluentFTP;
-using Microsoft.Extensions.Logging;
 
 namespace Squidex.Assets
 {

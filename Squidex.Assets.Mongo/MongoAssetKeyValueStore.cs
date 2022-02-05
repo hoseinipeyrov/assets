@@ -5,11 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
@@ -56,7 +52,7 @@ namespace Squidex.Assets
         {
             var entity = await collection.Find(x => x.Key == key).FirstOrDefaultAsync(ct);
 
-            return entity != null ? entity.Value : default;
+            return entity != null ? entity.Value! : default!;
         }
 
         public async IAsyncEnumerable<(string Key, T Value)> GetExpiredEntriesAsync(DateTimeOffset now,

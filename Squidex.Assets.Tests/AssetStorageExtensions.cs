@@ -5,9 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.IO;
-using System.Threading.Tasks;
-
 namespace Squidex.Assets
 {
     internal static class AssetStorageExtensions

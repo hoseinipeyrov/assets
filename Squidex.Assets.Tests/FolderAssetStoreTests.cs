@@ -5,10 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-using System.IO;
 using FakeItEasy;
-using Microsoft.Extensions.Logging;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter

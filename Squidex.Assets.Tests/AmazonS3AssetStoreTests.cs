@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Threading.Tasks;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
@@ -31,10 +30,10 @@ namespace Squidex.Assets
         {
             var sut = new AmazonS3AssetStore(new AmazonS3AssetOptions
             {
-                ServiceUrl = null,
+                ServiceUrl = null!,
                 RegionName = "invalid",
                 Bucket = "invalid",
-                BucketFolder = null,
+                BucketFolder = null!,
                 AccessKey = "invalid",
                 SecretKey = "invalid",
                 ForcePathStyle = false

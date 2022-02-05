@@ -5,11 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
@@ -187,7 +182,7 @@ namespace Squidex.Assets
             await Resize("boxpad.colored", "red", ResizeMode.BoxPad);
         }
 
-        private async Task Resize(string name, string color, ResizeMode mode)
+        private async Task Resize(string name, string? color, ResizeMode mode)
         {
             var (mimeType, source) = GetImage("logo.png");
 
@@ -233,10 +228,10 @@ namespace Squidex.Assets
 
                 var imageInfo = await sut.GetImageInfoAsync(target, mimeType);
 
-                Assert.Equal(135, imageInfo.PixelHeight);
-                Assert.Equal(600, imageInfo.PixelWidth);
+                Assert.Equal(135, imageInfo?.PixelHeight);
+                Assert.Equal(600, imageInfo?.PixelWidth);
 
-                Assert.Equal(ImageOrientation.TopLeft, imageInfo.Orientation);
+                Assert.Equal(ImageOrientation.TopLeft, imageInfo?.Orientation);
             }
         }
 
@@ -398,7 +393,7 @@ namespace Squidex.Assets
             Assert.Null(imageInfo);
         }
 
-        private FileStream GetStream(string type, string extension = null)
+        private FileStream GetStream(string type, string? extension = null)
         {
             Directory.CreateDirectory("images");
 
