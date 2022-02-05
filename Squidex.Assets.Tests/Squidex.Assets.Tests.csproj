@@ -63,6 +63,8 @@
     <ProjectReference Include="..\Squidex.Assets.Azure\Squidex.Assets.Azure.csproj" />
     <ProjectReference Include="..\Squidex.Assets.FTP\Squidex.Assets.FTP.csproj" />
     <ProjectReference Include="..\Squidex.Assets.GoogleCloud\Squidex.Assets.GoogleCloud.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.ImageMagick\Squidex.Assets.ImageMagick.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.ImageSharp\Squidex.Assets.ImageSharp.csproj" />
     <ProjectReference Include="..\Squidex.Assets.Mongo\Squidex.Assets.Mongo.csproj" />
     <ProjectReference Include="..\Squidex.Assets.S3\Squidex.Assets.S3.csproj" />
     <ProjectReference Include="..\Squidex.Assets.TusAdapter\Squidex.Assets.TusAdapter.csproj" />

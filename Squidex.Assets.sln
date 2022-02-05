@@ -27,6 +27,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TusTestServer", "TusTestSer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.TusClient", "Squidex.Assets.TusClient\Squidex.Assets.TusClient.csproj", "{98640BBB-52D2-4B5B-BABA-B34CB1813750}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.ImageSharp", "Squidex.Assets.ImageSharp\Squidex.Assets.ImageSharp.csproj", "{3E2A362F-02FF-4BA3-A12D-D017E57E4007}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.ImageMagick", "Squidex.Assets.ImageMagick\Squidex.Assets.ImageMagick.csproj", "{47C90E5C-5DCA-4093-B2DE-73A2697C0427}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +85,14 @@ Global
 		{98640BBB-52D2-4B5B-BABA-B34CB1813750}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98640BBB-52D2-4B5B-BABA-B34CB1813750}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98640BBB-52D2-4B5B-BABA-B34CB1813750}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E2A362F-02FF-4BA3-A12D-D017E57E4007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E2A362F-02FF-4BA3-A12D-D017E57E4007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E2A362F-02FF-4BA3-A12D-D017E57E4007}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E2A362F-02FF-4BA3-A12D-D017E57E4007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47C90E5C-5DCA-4093-B2DE-73A2697C0427}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47C90E5C-5DCA-4093-B2DE-73A2697C0427}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47C90E5C-5DCA-4093-B2DE-73A2697C0427}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47C90E5C-5DCA-4093-B2DE-73A2697C0427}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

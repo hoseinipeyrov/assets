@@ -40,6 +40,7 @@ namespace Squidex.Assets.Internal
             return SerializeToStreamAsync(stream, default);
         }
 
+#if NET5_0_OR_GREATER
         protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context,
             CancellationToken cancellationToken)
         {
@@ -65,7 +66,27 @@ namespace Squidex.Assets.Internal
                 await uploadProgress(content.Position);
             }
         }
+#else
+        private async Task SerializeToStreamAsync(Stream stream,
+            CancellationToken ct)
+        {
+            var buffer = new byte[uploadBufferSize];
 
+            while (true)
+            {
+                var bytesRead = await content.ReadAsync(buffer, 0, buffer.Length, ct);
+
+                if (bytesRead <= 0)
+                {
+                    break;
+                }
+
+                await stream.WriteAsync(buffer, 0, bytesRead, ct);
+
+                await uploadProgress(content.Position);
+            }
+        }
+#endif
         protected override bool TryComputeLength(out long length)
         {
             length = uploadLength;

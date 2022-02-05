@@ -5,8 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Assets.ImageMagick;
-
 namespace Squidex.Assets
 {
     public class MagicThumbnailGeneratorTests : AssetThumbnailGeneratorTests

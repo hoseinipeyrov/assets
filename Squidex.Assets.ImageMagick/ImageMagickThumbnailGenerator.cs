@@ -13,7 +13,7 @@ using ImageMagick;
 using SixLabors.ImageSharp;
 using Squidex.Assets.Internal;
 
-namespace Squidex.Assets.ImageMagick
+namespace Squidex.Assets
 {
     public sealed class ImageMagickThumbnailGenerator : IAssetThumbnailGenerator
     {

@@ -107,7 +107,7 @@ namespace Squidex.Assets
             var image = GetImage("logo.bmp");
 
             var pausingStream = new PauseStream(image.Stream, 0.25);
-            var pausingFile = new UploadFile(pausingStream, image.FileName, image.MimeType);
+            var pausingFile = new UploadFile(pausingStream, image.FileName, image.ContentType);
 
             var numReads = 0;
 
@@ -140,7 +140,7 @@ namespace Squidex.Assets
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    if (TusServerFixture.Files.Any(x => x.FileName == file.FileName && x.MimeType == file.MimeType))
+                    if (TusServerFixture.Files.Any(x => x.FileName == file.FileName && x.MimeType == file.ContentType))
                     {
                         break;
                     }
@@ -152,7 +152,7 @@ namespace Squidex.Assets
             {
             }
 
-            Assert.Contains(TusServerFixture.Files, x => x.FileName == file.FileName && x.MimeType == file.MimeType);
+            Assert.Contains(TusServerFixture.Files, x => x.FileName == file.FileName && x.MimeType == file.ContentType);
         }
 
         private UploadFile GetImage(string fileName)

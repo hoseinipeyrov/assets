@@ -21,6 +21,8 @@ namespace Squidex.Assets
 {
     public static class UploadHttpClientExtension
     {
+        private static readonly HttpMethod Patch = new HttpMethod("PATCH");
+
         private static class TusHeaders
         {
             public const string ContentType = "application/offset+octet-stream";
@@ -72,7 +74,7 @@ namespace Squidex.Assets
 
                 if (!string.IsNullOrWhiteSpace(fileId))
                 {
-                    bytesWritten = await httpClient.GetSizeAsync(GetFileIdUrl(uri, fileId), ct);
+                    bytesWritten = await httpClient.GetSizeAsync(GetFileIdUrl(uri, fileId!), ct);
 
                     if (bytesWritten > 0)
                     {
@@ -85,7 +87,7 @@ namespace Squidex.Assets
                     fileId = await httpClient.CreateAsync(uri, file, ct);
                 }
 
-                var url = GetFileIdUrl(uri, fileId);
+                var url = GetFileIdUrl(uri, fileId!);
 
                 var content = new ProgressableStreamContent(file.Stream, async bytes =>
                 {
@@ -110,7 +112,7 @@ namespace Squidex.Assets
                 content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, TusHeaders.ContentType);
 
                 var request =
-                    new HttpRequestMessage(HttpMethod.Patch, url) { Content = content }
+                    new HttpRequestMessage(Patch, url) { Content = content }
                         .WithDefaultHeaders()
                         .WithHeader(TusHeaders.UploadOffset, bytesWritten);
 
@@ -139,7 +141,7 @@ namespace Squidex.Assets
             metadata.Append(file.FileName.ToBase64());
             metadata.Append(',');
             metadata.Append("MimeType ");
-            metadata.Append(file.MimeType.ToBase64());
+            metadata.Append(file.ContentType.ToBase64());
 
             var request =
                 new HttpRequestMessage(HttpMethod.Post, uri)
@@ -162,9 +164,11 @@ namespace Squidex.Assets
                 throw new HttpRequestException($"Server did not answer location.");
             }
 
-            var locationValue = location.First().Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var locationValue = location.First().Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
 
-            return locationValue[^1];
+#pragma warning disable MA0098 // Use indexer instead of LINQ methods
+            return locationValue.Last();
+#pragma warning restore MA0098 // Use indexer instead of LINQ methods
         }
 
         public static Task<bool> DeleteUploadAsync(this HttpClient httpClient, string url, string fileId,
@@ -281,7 +285,11 @@ namespace Squidex.Assets
         {
             var url = uri.ToString();
 
+#if NETCOREAPP3_1_OR_GREATER
             if (!url.EndsWith('/'))
+#else
+            if (!url.EndsWith("/", StringComparison.Ordinal))
+#endif
             {
                 url += '/';
             }

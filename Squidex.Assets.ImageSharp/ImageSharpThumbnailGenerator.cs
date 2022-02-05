@@ -23,7 +23,7 @@ using Squidex.Assets.Internal;
 using ISResizeMode = SixLabors.ImageSharp.Processing.ResizeMode;
 using ISResizeOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
-namespace Squidex.Assets.ImageSharp
+namespace Squidex.Assets
 {
     public sealed class ImageSharpThumbnailGenerator : IAssetThumbnailGenerator
     {

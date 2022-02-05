@@ -8,12 +8,23 @@
 using System.IO;
 using HeyRed.Mime;
 
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
-
 namespace Squidex.Assets
 {
-    public sealed record UploadFile(Stream Stream, string FileName, string MimeType)
+    public sealed class UploadFile
     {
+        public Stream Stream { get; }
+
+        public string FileName { get; }
+
+        public string ContentType { get; }
+
+        public UploadFile(Stream stream, string fileName, string contentType)
+        {
+            Stream = stream;
+            FileName = fileName;
+            ContentType = contentType;
+        }
+
         public static UploadFile FromFile(FileInfo fileInfo, string? mimeType = null)
         {
             if (string.IsNullOrEmpty(mimeType))
@@ -21,7 +32,7 @@ namespace Squidex.Assets
                 mimeType = MimeTypesMap.GetMimeType(fileInfo.Name);
             }
 
-            return new UploadFile(fileInfo.OpenRead(), fileInfo.Name, mimeType);
+            return new UploadFile(fileInfo.OpenRead(), fileInfo.Name, mimeType!);
         }
 
         public static UploadFile FromPath(string path, string? mimeType = null)

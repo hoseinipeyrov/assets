@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.Collections.Generic;
-using Squidex.Assets.ImageMagick;
 
 namespace Squidex.Assets
 {

@@ -14,16 +14,54 @@ using System.Threading.Tasks;
 
 namespace Squidex.Assets
 {
-    public abstract record UploadEvent(string FileId);
+    public abstract class UploadEvent
+    {
+        public string FileId { get; }
 
-    public sealed record UploadProgressEvent(string FileId, int Progress, long BytesWritten, long BytesTotal)
-        : UploadEvent(FileId);
+        protected UploadEvent(string fileId)
+        {
+            FileId = fileId;
+        }
+    }
 
-    public sealed record UploadCompletedEvent(string FileId, HttpResponseMessage Response)
-        : UploadEvent(FileId);
+    public sealed class UploadProgressEvent : UploadEvent
+    {
+        public int Progress { get; }
 
-    public sealed record UploadExceptionEvent(string FileId, Exception Exception)
-        : UploadEvent(FileId);
+        public long BytesWritten { get; }
+
+        public long BytesTotal { get; }
+
+        public UploadProgressEvent(string fileId, int Progress, long BytesWritten, long BytesTotal)
+            : base(fileId)
+        {
+            this.Progress = Progress;
+            this.BytesWritten = BytesWritten;
+            this.BytesTotal = BytesTotal;
+        }
+    }
+
+    public sealed class UploadCompletedEvent : UploadEvent
+    {
+        public HttpResponseMessage Response { get; }
+
+        public UploadCompletedEvent(string fileId, HttpResponseMessage response)
+            : base(fileId)
+        {
+            Response = response;
+        }
+    }
+
+    public sealed class UploadExceptionEvent : UploadEvent
+    {
+        public Exception Exception { get; }
+
+        public UploadExceptionEvent(string fileId, Exception exception)
+            : base(fileId)
+        {
+            Exception = exception;
+        }
+    }
 
     public interface IProgressHandler
     {

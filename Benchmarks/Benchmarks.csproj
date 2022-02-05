@@ -23,6 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Squidex.Assets.ImageMagick\Squidex.Assets.ImageMagick.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.ImageSharp\Squidex.Assets.ImageSharp.csproj" />
     <ProjectReference Include="..\Squidex.Assets\Squidex.Assets.csproj" />
   </ItemGroup>
 

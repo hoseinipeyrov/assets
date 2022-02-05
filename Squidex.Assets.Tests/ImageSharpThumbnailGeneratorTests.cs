@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.Collections.Generic;
-using Squidex.Assets.ImageSharp;
 
 namespace Squidex.Assets
 {

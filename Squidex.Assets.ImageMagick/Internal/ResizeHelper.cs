@@ -8,7 +8,7 @@
 using System;
 using SixLabors.ImageSharp;
 
-namespace Squidex.Assets.ImageMagick
+namespace Squidex.Assets.Internal
 {
     internal static class ResizeHelper
     {

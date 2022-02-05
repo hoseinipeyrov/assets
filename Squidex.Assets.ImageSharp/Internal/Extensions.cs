@@ -11,9 +11,9 @@ using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
 
-namespace Squidex.Assets.ImageSharp
+namespace Squidex.Assets.Internal
 {
-    public static class Extensions
+    internal static class Extensions
     {
         public static IImageEncoder GetEncoder(this ResizeOptions options, IImageFormat format)
         {
