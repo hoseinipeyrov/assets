@@ -5,9 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.IO;
-using System.Threading.Tasks;
-
 namespace Squidex.Assets
 {
     public sealed class TempAssetFile : AssetFile
@@ -49,30 +46,6 @@ namespace Squidex.Assets
         public override Stream OpenRead()
         {
             return new NonDisposingStream(stream);
-        }
-
-        private sealed class NonDisposingStream : DelegatingStream
-        {
-            public NonDisposingStream(Stream inner)
-                : base(inner)
-            {
-                inner.Position = 0;
-            }
-
-            public override void Close()
-            {
-                Flush();
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                Flush();
-            }
-
-            public override async ValueTask DisposeAsync()
-            {
-                await FlushAsync();
-            }
         }
     }
 }

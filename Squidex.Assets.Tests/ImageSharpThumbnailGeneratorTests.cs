@@ -5,9 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Collections.Generic;
-using Squidex.Assets.ImageSharp;
-
 namespace Squidex.Assets
 {
     public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests

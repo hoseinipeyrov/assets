@@ -5,12 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Squidex.Assets.ImageMagick;
-using Squidex.Assets.ImageSharp;
 using Squidex.Assets.Remote;
 
 namespace Squidex.Assets

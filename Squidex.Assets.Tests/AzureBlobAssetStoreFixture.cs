@@ -13,11 +13,9 @@ namespace Squidex.Assets
 
         public AzureBlobAssetStoreFixture()
         {
-            AssetStore = new AzureBlobAssetStore(new AzureBlobAssetOptions
-            {
-                ConnectionString = "UseDevelopmentStorage=true",
-                ContainerName = "squidex-test-container"
-            });
+            var options = TestHelpers.Configuration.GetSection("azureBlob").Get<AzureBlobAssetOptions>();
+
+            AssetStore = new AzureBlobAssetStore(options);
             AssetStore.InitializeAsync(default).Wait();
         }
     }

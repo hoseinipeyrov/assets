@@ -20,8 +20,6 @@
 # NodeJS 
 **/node_modules
 
-backend/src/Squidex/Assets/*.*
-
 **/appsettings.Development.json
 **/appsettings.Production.json
 **/launchSettings.json

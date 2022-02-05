@@ -5,11 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentFTP;
 using Microsoft.Extensions.Logging;
 using Squidex.Assets.Internal;
@@ -143,7 +139,7 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
@@ -154,6 +150,8 @@ namespace Squidex.Assets
             try
             {
                 await UploadAsync(client, name, stream, overwrite, ct);
+
+                return -1;
             }
             finally
             {

@@ -19,7 +19,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.Mongo", "Squ
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "Benchmarks\Benchmarks.csproj", "{EC9368A8-7EBE-4BA3-975A-480E4E9ED2C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.ResizeService", "Squidex.Assets.ResizeService\Squidex.Assets.ResizeService.csproj", "{D3595B59-3BFD-4042-B511-53CC4C32C30F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.ResizeService", "Squidex.Assets.ResizeService\Squidex.Assets.ResizeService.csproj", "{D3595B59-3BFD-4042-B511-53CC4C32C30F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Assets.TusAdapter", "Squidex.Assets.TusAdapter\Squidex.Assets.TusAdapter.csproj", "{0845CC80-AD20-41B0-AFA1-A51F4808F031}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TusTestServer", "TusTestServer\TusTestServer.csproj", "{53FAD161-D0A5-4920-94DA-E5C88D48B707}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.TusClient", "Squidex.Assets.TusClient\Squidex.Assets.TusClient.csproj", "{98640BBB-52D2-4B5B-BABA-B34CB1813750}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.ImageSharp", "Squidex.Assets.ImageSharp\Squidex.Assets.ImageSharp.csproj", "{3E2A362F-02FF-4BA3-A12D-D017E57E4007}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.ImageMagick", "Squidex.Assets.ImageMagick\Squidex.Assets.ImageMagick.csproj", "{47C90E5C-5DCA-4093-B2DE-73A2697C0427}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +73,26 @@ Global
 		{D3595B59-3BFD-4042-B511-53CC4C32C30F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3595B59-3BFD-4042-B511-53CC4C32C30F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3595B59-3BFD-4042-B511-53CC4C32C30F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0845CC80-AD20-41B0-AFA1-A51F4808F031}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0845CC80-AD20-41B0-AFA1-A51F4808F031}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0845CC80-AD20-41B0-AFA1-A51F4808F031}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0845CC80-AD20-41B0-AFA1-A51F4808F031}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53FAD161-D0A5-4920-94DA-E5C88D48B707}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53FAD161-D0A5-4920-94DA-E5C88D48B707}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53FAD161-D0A5-4920-94DA-E5C88D48B707}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53FAD161-D0A5-4920-94DA-E5C88D48B707}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98640BBB-52D2-4B5B-BABA-B34CB1813750}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98640BBB-52D2-4B5B-BABA-B34CB1813750}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98640BBB-52D2-4B5B-BABA-B34CB1813750}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98640BBB-52D2-4B5B-BABA-B34CB1813750}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E2A362F-02FF-4BA3-A12D-D017E57E4007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E2A362F-02FF-4BA3-A12D-D017E57E4007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E2A362F-02FF-4BA3-A12D-D017E57E4007}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E2A362F-02FF-4BA3-A12D-D017E57E4007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47C90E5C-5DCA-4093-B2DE-73A2697C0427}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47C90E5C-5DCA-4093-B2DE-73A2697C0427}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47C90E5C-5DCA-4093-B2DE-73A2697C0427}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47C90E5C-5DCA-4093-B2DE-73A2697C0427}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

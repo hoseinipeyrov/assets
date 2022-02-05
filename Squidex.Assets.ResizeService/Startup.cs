@@ -5,9 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Assets.ImageMagick;
-using Squidex.Assets.ImageSharp;
-
 namespace Squidex.Assets.ResizeService
 {
     public sealed class Startup

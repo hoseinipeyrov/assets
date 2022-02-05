@@ -5,25 +5,18 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-
 namespace Squidex.Assets
 {
-    public sealed class GoogleCloudAssetStoreFixture : IDisposable
+    public sealed class GoogleCloudAssetStoreFixture
     {
         public GoogleCloudAssetStore AssetStore { get; }
 
         public GoogleCloudAssetStoreFixture()
         {
-            AssetStore = new GoogleCloudAssetStore(new GoogleCloudAssetOptions
-            {
-                BucketName = "squidex-test"
-            });
-            AssetStore.InitializeAsync(default).Wait();
-        }
+            var options = TestHelpers.Configuration.GetSection("googleCloud").Get<GoogleCloudAssetOptions>();
 
-        public void Dispose()
-        {
+            AssetStore = new GoogleCloudAssetStore(options);
+            AssetStore.InitializeAsync(default).Wait();
         }
     }
 }

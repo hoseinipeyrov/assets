@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.IO;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -20,7 +19,7 @@ namespace Squidex.Assets
 
             var deserialized = JsonConvert.DeserializeObject<DelegateAssetFile>(JsonConvert.SerializeObject(source));
 
-            Assert.Equal(source.FileName, deserialized.FileName);
+            Assert.Equal(source.FileName, deserialized?.FileName);
         }
     }
 }

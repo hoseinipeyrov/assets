@@ -5,11 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
 using System.Buffers;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Squidex.Assets
 {
@@ -59,6 +55,18 @@ namespace Squidex.Assets
             finally
             {
                 Pool.Return(buffer);
+            }
+        }
+
+        public static long GetLengthOrZero(this Stream stream)
+        {
+            try
+            {
+                return stream.Length;
+            }
+            catch
+            {
+                return 0;
             }
         }
     }

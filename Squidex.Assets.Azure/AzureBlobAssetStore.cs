@@ -5,10 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -55,9 +51,10 @@ namespace Squidex.Assets
                 var blobServiceClient = new BlobServiceClient(connectionString);
 
                 blobContainer = blobServiceClient.GetBlobContainerClient(containerName);
-                blobContainerProperties = await blobContainer.GetPropertiesAsync(cancellationToken: ct);
 
                 await blobContainer.CreateIfNotExistsAsync(cancellationToken: ct);
+
+                blobContainerProperties = await blobContainer.GetPropertiesAsync(cancellationToken: ct);
             }
             catch (Exception ex)
             {
@@ -65,7 +62,7 @@ namespace Squidex.Assets
             }
         }
 
-        public string GeneratePublicUrl(string fileName)
+        public string? GeneratePublicUrl(string fileName)
         {
             var name = GetFileName(fileName, nameof(fileName));
 
@@ -159,7 +156,7 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             Guard.NotNull(stream, nameof(stream));
@@ -171,6 +168,8 @@ namespace Squidex.Assets
                 var blob = blobContainer.GetBlobClient(name);
 
                 await blob.UploadAsync(stream, overwrite ? null : NoOverwriteUpload, ct);
+
+                return -1;
             }
             catch (RequestFailedException ex) when (ex.Status == 409)
             {

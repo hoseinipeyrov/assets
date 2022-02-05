@@ -5,10 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
 using FakeItEasy;
 using FluentFTP;
-using Microsoft.Extensions.Logging;
 
 namespace Squidex.Assets
 {
@@ -18,9 +16,12 @@ namespace Squidex.Assets
 
         public FTPAssetStoreFixture()
         {
-            AssetStore = new FTPAssetStore(() => new FtpClient("localhost", 21, "test", "test"), new FTPAssetOptions
+            AssetStore = new FTPAssetStore(() => new FtpClient(
+                TestHelpers.Configuration["ftp:serverHost"], 21,
+                TestHelpers.Configuration["ftp:username"],
+                TestHelpers.Configuration["ftp:userPassword"]), new FTPAssetOptions
             {
-                Path = "assets"
+                Path = TestHelpers.Configuration["ftp:path"]
             }, A.Fake<ILogger<FTPAssetStore>>());
             AssetStore.InitializeAsync(default).Wait();
         }

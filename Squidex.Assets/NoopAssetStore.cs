@@ -5,11 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Squidex.Assets
 {
     public sealed class NoopAssetStore : IAssetStore
@@ -32,7 +27,7 @@ namespace Squidex.Assets
             throw new NotSupportedException();
         }
 
-        public Task UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        public Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
             CancellationToken ct = default)
         {
             throw new NotSupportedException();

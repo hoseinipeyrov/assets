@@ -4,8 +4,9 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <IsPackable>false</IsPackable>
-    <ImplicitUsings>enable</ImplicitUsings>
+	<LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Squidex.Assets.ImageMagick\Squidex.Assets.ImageMagick.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.ImageSharp\Squidex.Assets.ImageSharp.csproj" />
     <ProjectReference Include="..\Squidex.Assets\Squidex.Assets.csproj" />
   </ItemGroup>
 
