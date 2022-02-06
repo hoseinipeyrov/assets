@@ -54,7 +54,14 @@ namespace Squidex.Assets
 
             await middleware.Invoke(customContext);
 
-            return (new TusActionResult(customContext.Response), customContext.Items[TusFile] as AssetTusFile);
+            var file = customContext.Items[TusFile] as AssetTusFile;
+
+            if (file != null)
+            {
+                httpContext.Response.RegisterForDispose(file);
+            }
+
+            return (new TusActionResult(customContext.Response), file);
         }
 
         // From: https://github.com/dotnet/aspnetcore/blob/main/src/SignalR/common/Http.Connections/src/Internal/HttpConnectionDispatcher.cs#L509
