@@ -9,6 +9,8 @@ namespace Squidex.Assets
 {
     public sealed class DelegatingProgressHandler : IProgressHandler
     {
+        internal static readonly DelegatingProgressHandler Instance = new DelegatingProgressHandler();
+
         public Func<UploadCompletedEvent, Task>? OnCompletedAsync { get; set; }
 
         public Func<UploadExceptionEvent, Task>? OnFailedAsync { get; set; }

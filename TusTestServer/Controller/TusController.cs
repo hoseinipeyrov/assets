@@ -30,26 +30,33 @@ namespace TusTestServer.Controller
 
                 using var cts = new CancellationTokenSource();
 
-                await httpClient.UploadWithProgressAsync(uploadUri, file, null, new DelegatingProgressHandler
-                {
-                    OnProgressAsync = @event =>
+                await httpClient.UploadWithProgressAsync(uploadUri, file,
+                    new UploadOptions
                     {
-                        fileId = @event.FileId;
-
-                        if (@event.Progress > 50 && !cts.IsCancellationRequested)
+                        ProgressHandler = new DelegatingProgressHandler
                         {
-                            cts.Cancel();
-                        }
+                            OnProgressAsync = @event =>
+                            {
+                                fileId = @event.FileId;
 
-                        return Task.CompletedTask;
-                    }
-                }, cts.Token);
+                                if (@event.Progress > 50 && !cts.IsCancellationRequested)
+                                {
+                                    cts.Cancel();
+                                }
+
+                                return Task.CompletedTask;
+                            }
+                        }
+                    }, cts.Token);
 
                 await Task.Delay(1000, default);
 
                 if (cts.IsCancellationRequested)
                 {
-                    await httpClient.UploadWithProgressAsync(uploadUri, file, fileId, ct: default);
+                    await httpClient.UploadWithProgressAsync(uploadUri, file, new UploadOptions
+                    {
+                        FileId = fileId,
+                    }, ct: default);
                 }
             }
         }

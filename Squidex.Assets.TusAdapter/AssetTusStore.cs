@@ -10,7 +10,6 @@ using System.Security.Cryptography;
 using Squidex.Assets.Internal;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
-using tusdotnet.Parsers;
 
 namespace Squidex.Assets
 {
@@ -105,11 +104,9 @@ namespace Squidex.Assets
                     await assetStore.DownloadAsync(PartName(fileId, i), tempStream, default, ct);
                 }
 
-                var parsedMetadata = MetadataParser.ParseAndValidate(MetadataParsingStrategy.AllowEmptyValues, metadata.UploadMetadata).Metadata;
-
                 await CleanupAsync(metadata, default);
 
-                return new AssetTusFile(fileId, metadata, parsedMetadata, tempStream, x =>
+                return AssetTusFile.Create(fileId, metadata, tempStream, x =>
                 {
                     files.TryRemove(x.Id, out _);
                 });
