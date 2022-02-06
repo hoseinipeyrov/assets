@@ -86,21 +86,28 @@ namespace Squidex.Assets
 
                 var content = new ProgressableStreamContent(file.Stream, async bytes =>
                 {
-                    bytesWritten = bytes;
-
-                    if (bytesWritten == totalBytes)
+                    try
                     {
-                        await handler.OnProgressAsync(new UploadProgressEvent(fileId!, 100, totalBytes, totalBytes));
-                        return;
+                        bytesWritten = bytes;
+
+                        if (bytesWritten == totalBytes)
+                        {
+                            await handler.OnProgressAsync(new UploadProgressEvent(fileId!, 100, totalBytes, totalBytes), ct);
+                            return;
+                        }
+
+                        var newProgress = (int)Math.Floor(100 * (double)bytesWritten / totalBytes);
+
+                        if (newProgress != totalProgress)
+                        {
+                            totalProgress = newProgress;
+
+                            await handler.OnProgressAsync(new UploadProgressEvent(fileId!, totalProgress, bytes, totalBytes), ct);
+                        }
                     }
-
-                    var newProgress = (int)Math.Floor(100 * (double)bytesWritten / totalBytes);
-
-                    if (newProgress != totalProgress)
+                    catch
                     {
-                        totalProgress = newProgress;
-
-                        await handler.OnProgressAsync(new UploadProgressEvent(fileId!, totalProgress, bytes, totalBytes));
+                        return;
                     }
                 });
 
@@ -117,14 +124,19 @@ namespace Squidex.Assets
 
                 if (bytesWritten == totalBytes)
                 {
-                    await handler.OnCompletedAsync(new UploadCompletedEvent(fileId!, response));
-
-                    await httpClient.TerminateAsync(url, default);
+                    try
+                    {
+                        await handler.OnCompletedAsync(new UploadCompletedEvent(fileId!, response), ct);
+                    }
+                    finally
+                    {
+                        await httpClient.TerminateAsync(url, default);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                await handler.OnFailedAsync(new UploadExceptionEvent(file.FileName, ex));
+                await handler.OnFailedAsync(new UploadExceptionEvent(file.FileName, ex), ct);
             }
         }
 

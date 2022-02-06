@@ -36,7 +36,7 @@ namespace Squidex.Assets
                 {
                     ProgressHandler = new DelegatingProgressHandler
                     {
-                        OnFailedAsync = @event =>
+                        OnFailedAsync = (@event, _) =>
                         {
                             reportedException = @event.Exception;
 
@@ -76,14 +76,14 @@ namespace Squidex.Assets
                 {
                     ProgressHandler = new DelegatingProgressHandler
                     {
-                        OnProgressAsync = @event =>
+                        OnProgressAsync = (@event, _) =>
                         {
                             reportedProgress.Add(@event.Progress);
 
                             fileId = @event.FileId;
                             return Task.CompletedTask;
                         },
-                        OnCompletedAsync = @event =>
+                        OnCompletedAsync = (@event, _) =>
                         {
                             reportedCompleted = true;
 
@@ -121,7 +121,7 @@ namespace Squidex.Assets
                     {
                         ProgressHandler = new DelegatingProgressHandler
                         {
-                            OnProgressAsync = @event =>
+                            OnProgressAsync = (@event, _) =>
                             {
                                 fileId = @event.FileId;
                                 return Task.CompletedTask;

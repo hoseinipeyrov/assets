@@ -6,7 +6,6 @@
 // ==========================================================================
 
 #pragma warning disable MA0048 // File name must match type name
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
 namespace Squidex.Assets
 {
@@ -28,12 +27,12 @@ namespace Squidex.Assets
 
         public long BytesTotal { get; }
 
-        public UploadProgressEvent(string fileId, int Progress, long BytesWritten, long BytesTotal)
+        public UploadProgressEvent(string fileId, int progress, long bytesWritten, long bytesTotal)
             : base(fileId)
         {
-            this.Progress = Progress;
-            this.BytesWritten = BytesWritten;
-            this.BytesTotal = BytesTotal;
+            Progress = progress;
+            BytesWritten = bytesWritten;
+            BytesTotal = bytesTotal;
         }
     }
 
@@ -61,10 +60,13 @@ namespace Squidex.Assets
 
     public interface IProgressHandler
     {
-        Task OnProgressAsync(UploadProgressEvent @event);
+        Task OnProgressAsync(UploadProgressEvent @event,
+            CancellationToken ct);
 
-        Task OnCompletedAsync(UploadCompletedEvent @event);
+        Task OnCompletedAsync(UploadCompletedEvent @event,
+            CancellationToken ct);
 
-        Task OnFailedAsync(UploadExceptionEvent @event);
+        Task OnFailedAsync(UploadExceptionEvent @event,
+            CancellationToken ct);
     }
 }

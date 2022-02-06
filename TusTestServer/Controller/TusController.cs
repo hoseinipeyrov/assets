@@ -35,7 +35,7 @@ namespace TusTestServer.Controller
                     {
                         ProgressHandler = new DelegatingProgressHandler
                         {
-                            OnProgressAsync = @event =>
+                            OnProgressAsync = (@event, _) =>
                             {
                                 fileId = @event.FileId;
 
