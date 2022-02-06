@@ -8,77 +8,86 @@
 using System.Text;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
+using tusdotnet.Parsers;
 
 namespace Squidex.Assets
 {
     public sealed class AssetTusFile : AssetFile, ITusFile, IDisposable, IAsyncDisposable
     {
-        private readonly Dictionary<string, Metadata> parsedMetadata;
         private readonly Stream stream;
         private readonly Action<AssetTusFile> disposed;
 
         public string Id { get; }
 
-        internal TusMetadata Metadata { get; }
+        public Dictionary<string, string> Metadata { get; }
 
-        public AssetTusFile(string id, TusMetadata metadata, Dictionary<string, Metadata> parsedMetadata, Stream stream, Action<AssetTusFile> disposed)
-            : base(GetFileName(parsedMetadata), GetMimeType(parsedMetadata), stream.Length)
+        public Dictionary<string, Metadata> MetadataRaw { get; }
+
+        internal TusMetadata TusMetadata { get; }
+
+        public static AssetTusFile Create(string id, TusMetadata tusMetadata, Stream stream, Action<AssetTusFile> disposed)
+        {
+            var metadataRaw = MetadataParser.ParseAndValidate(MetadataParsingStrategy.AllowEmptyValues, tusMetadata.UploadMetadata).Metadata;
+
+            var metadata = new Dictionary<string, string>();
+
+            foreach (var (key, value) in metadataRaw)
+            {
+                metadata[key] = value.GetString(Encoding.UTF8).Trim();
+            }
+
+            return new AssetTusFile(id, tusMetadata, metadata, metadataRaw, stream, disposed);
+        }
+
+        public AssetTusFile(
+            string id,
+            TusMetadata tusMetadata,
+            Dictionary<string, string> metadata,
+            Dictionary<string, Metadata> metadataRaw,
+            Stream stream,
+            Action<AssetTusFile> disposed)
+            : base(GetFileName(metadata), GetMimeType(metadata), stream.Length)
         {
             Id = id;
 
-            this.parsedMetadata = parsedMetadata;
             this.stream = stream;
-            this.disposed = disposed;
 
             Metadata = metadata;
+            MetadataRaw = metadataRaw;
+            TusMetadata = tusMetadata;
+
+            this.disposed = disposed;
         }
 
-        private static string GetFileName(Dictionary<string, Metadata> metadata)
+        private static string GetFileName(Dictionary<string, string> metadata)
         {
-            var result = string.Empty;
+            var result = metadata.FirstOrDefault(x => string.Equals(x.Key, "fileName", StringComparison.OrdinalIgnoreCase)).Value;
 
-            var fileName = metadata.FirstOrDefault(x => string.Equals(x.Key, "fileName", StringComparison.OrdinalIgnoreCase)).Value;
-
-            if (fileName != null)
+            if (!string.IsNullOrWhiteSpace(result))
             {
-                result = fileName.GetString(Encoding.UTF8);
+                return result;
             }
 
-            if (string.IsNullOrWhiteSpace(result))
-            {
-                result = "Unknown";
-            }
-
-            return result;
+            return "Unknown.blob";
         }
 
-        private static string GetMimeType(Dictionary<string, Metadata> metadata)
+        private static string GetMimeType(Dictionary<string, string> metadata)
         {
-            var result = string.Empty;
+            var result = metadata.FirstOrDefault(x => string.Equals(x.Key, "fileType", StringComparison.OrdinalIgnoreCase)).Value;
 
-            var fileType = metadata.FirstOrDefault(x => string.Equals(x.Key, "fileType", StringComparison.OrdinalIgnoreCase)).Value;
-
-            if (fileType != null)
+            if (!string.IsNullOrWhiteSpace(result))
             {
-                result = fileType.GetString(Encoding.UTF8);
+                return result;
             }
 
-            if (string.IsNullOrWhiteSpace(result))
-            {
-                fileType = metadata.FirstOrDefault(x => string.Equals(x.Key, "mimeType", StringComparison.OrdinalIgnoreCase)).Value;
+            result = metadata.FirstOrDefault(x => string.Equals(x.Key, "mimeType", StringComparison.OrdinalIgnoreCase)).Value;
 
-                if (fileType != null)
-                {
-                    return fileType.GetString(Encoding.UTF8);
-                }
+            if (!string.IsNullOrWhiteSpace(result))
+            {
+                return result;
             }
 
-            if (string.IsNullOrWhiteSpace(result))
-            {
-                result = "application/octet-stream";
-            }
-
-            return result;
+            return "application/octet-stream";
         }
 
         public override void Dispose()
@@ -107,7 +116,7 @@ namespace Squidex.Assets
 
         public Task<Dictionary<string, Metadata>> GetMetadataAsync(CancellationToken cancellationToken)
         {
-            return Task.FromResult(parsedMetadata);
+            return Task.FromResult(MetadataRaw);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace Squidex.Assets
             public const string UploadMetadata = "Upload-Metadata";
         }
 
-        public static Task UploadWithProgressAsync(this HttpClient httpClient, string url, UploadFile file, string? fileId = null, IProgressHandler? handler = null,
+        public static Task UploadWithProgressAsync(this HttpClient httpClient, string url, UploadFile file, UploadOptions options = default,
             CancellationToken ct = default)
         {
             if (url == null)
@@ -42,10 +42,10 @@ namespace Squidex.Assets
 
             var uri = new Uri(url, UriKind.RelativeOrAbsolute);
 
-            return httpClient.UploadWithProgressAsync(uri, file, fileId, handler, ct);
+            return httpClient.UploadWithProgressAsync(uri, file, options, ct);
         }
 
-        public static async Task UploadWithProgressAsync(this HttpClient httpClient, Uri uri, UploadFile file, string? fileId = null, IProgressHandler? handler = null,
+        public static async Task UploadWithProgressAsync(this HttpClient httpClient, Uri uri, UploadFile file, UploadOptions options = default,
             CancellationToken ct = default)
         {
             if (uri == null)
@@ -58,10 +58,11 @@ namespace Squidex.Assets
                 throw new ArgumentNullException(nameof(file));
             }
 
-            handler ??= new DelegatingProgressHandler();
+            var handler = options.ProgressHandler ?? DelegatingProgressHandler.Instance;
 
             try
             {
+                var fileId = options.FileId;
                 var totalProgress = 0;
                 var totalBytes = file.Stream.Length;
                 var bytesWritten = 0L;
@@ -78,7 +79,7 @@ namespace Squidex.Assets
 
                 if (bytesWritten == 0 || string.IsNullOrWhiteSpace(fileId))
                 {
-                    fileId = await httpClient.CreateAsync(uri, file, ct);
+                    fileId = await httpClient.CreateAsync(uri, file, options, ct);
                 }
 
                 var url = GetFileIdUrl(uri, fileId!);
@@ -127,7 +128,7 @@ namespace Squidex.Assets
             }
         }
 
-        private static async Task<string> CreateAsync(this HttpClient httpClient, Uri uri, UploadFile file,
+        private static async Task<string> CreateAsync(this HttpClient httpClient, Uri uri, UploadFile file, UploadOptions options,
             CancellationToken ct)
         {
             var metadata = new StringBuilder();
@@ -136,6 +137,17 @@ namespace Squidex.Assets
             metadata.Append(',');
             metadata.Append("MimeType ");
             metadata.Append(file.ContentType.ToBase64());
+
+            if (options.Metadata != null)
+            {
+                foreach (var kvp in options.Metadata.Where(x => x.Value != null))
+                {
+                    metadata.Append(',');
+                    metadata.Append(kvp.Key);
+                    metadata.Append(' ');
+                    metadata.Append(kvp.Value.ToBase64());
+                }
+            }
 
             var request =
                 new HttpRequestMessage(HttpMethod.Post, uri)

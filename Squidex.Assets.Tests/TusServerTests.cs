@@ -31,16 +31,20 @@ namespace Squidex.Assets
 
             var reportedException = (Exception?)null;
 
-            await _.Client.UploadWithProgressAsync(new Uri("/404", UriKind.Relative), image, null, new DelegatingProgressHandler
-            {
-                OnFailedAsync = @event =>
+            await _.Client.UploadWithProgressAsync(new Uri("/404", UriKind.Relative), image,
+                new UploadOptions
                 {
-                    reportedException = @event.Exception;
+                    ProgressHandler = new DelegatingProgressHandler
+                    {
+                        OnFailedAsync = @event =>
+                        {
+                            reportedException = @event.Exception;
 
-                    fileId = @event.FileId;
-                    return Task.CompletedTask;
-                }
-            });
+                            fileId = @event.FileId;
+                            return Task.CompletedTask;
+                        }
+                    }
+                });
 
             Assert.IsType<HttpRequestException>(reportedException);
         }
@@ -67,23 +71,27 @@ namespace Squidex.Assets
             var reportedProgress = new List<int>();
             var reportedCompleted = false;
 
-            await _.Client.UploadWithProgressAsync(new Uri(url, UriKind.Relative), image, null, new DelegatingProgressHandler
-            {
-                OnProgressAsync = @event =>
+            await _.Client.UploadWithProgressAsync(new Uri(url, UriKind.Relative), image,
+                new UploadOptions
                 {
-                    reportedProgress.Add(@event.Progress);
+                    ProgressHandler = new DelegatingProgressHandler
+                    {
+                        OnProgressAsync = @event =>
+                        {
+                            reportedProgress.Add(@event.Progress);
 
-                    fileId = @event.FileId;
-                    return Task.CompletedTask;
-                },
-                OnCompletedAsync = @event =>
-                {
-                    reportedCompleted = true;
+                            fileId = @event.FileId;
+                            return Task.CompletedTask;
+                        },
+                        OnCompletedAsync = @event =>
+                        {
+                            reportedCompleted = true;
 
-                    fileId = @event.FileId;
-                    return Task.CompletedTask;
-                }
-            });
+                            fileId = @event.FileId;
+                            return Task.CompletedTask;
+                        }
+                    }
+                });
 
             Assert.True(reportedCompleted);
             Assert.Equal(Enumerable.Range(1, 100).ToArray(), reportedProgress.ToArray());
@@ -108,14 +116,19 @@ namespace Squidex.Assets
             {
                 pausingStream.Reset();
 
-                await _.Client.UploadWithProgressAsync(new Uri(url, UriKind.Relative), pausingFile, fileId, new DelegatingProgressHandler
-                {
-                    OnProgressAsync = @event =>
+                await _.Client.UploadWithProgressAsync(new Uri(url, UriKind.Relative), pausingFile,
+                    new UploadOptions
                     {
-                        fileId = @event.FileId;
-                        return Task.CompletedTask;
-                    }
-                });
+                        ProgressHandler = new DelegatingProgressHandler
+                        {
+                            OnProgressAsync = @event =>
+                            {
+                                fileId = @event.FileId;
+                                return Task.CompletedTask;
+                            }
+                        },
+                        FileId = fileId
+                    });
 
                 numReads++;
             }
