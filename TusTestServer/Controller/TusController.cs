@@ -28,35 +28,31 @@ namespace TusTestServer.Controller
             {
                 var file = UploadFile.FromPath("wwwroot/LargeImage.jpg");
 
-                using var cts = new CancellationTokenSource();
+                var pausingStream = new PauseStream(file.Stream, 0.25);
+                var pausingFile = new UploadFile(pausingStream, file.FileName, file.ContentType);
 
-                await httpClient.UploadWithProgressAsync(uploadUri, file,
-                    new UploadOptions
-                    {
-                        ProgressHandler = new DelegatingProgressHandler
-                        {
-                            OnProgressAsync = (@event, _) =>
-                            {
-                                fileId = @event.FileId;
-
-                                if (@event.Progress > 50 && !cts.IsCancellationRequested)
-                                {
-                                    cts.Cancel();
-                                }
-
-                                return Task.CompletedTask;
-                            }
-                        }
-                    }, cts.Token);
-
-                await Task.Delay(1000, default);
-
-                if (cts.IsCancellationRequested)
+                await using (pausingFile.Stream)
                 {
-                    await httpClient.UploadWithProgressAsync(uploadUri, file, new UploadOptions
+                    while (pausingStream.Position < pausingStream.Length)
                     {
-                        FileId = fileId,
-                    }, ct: default);
+                        pausingStream.Reset();
+
+                        await httpClient.UploadWithProgressAsync(uploadUri, pausingFile, new UploadOptions
+                        {
+                            ProgressHandler = new DelegatingProgressHandler
+                            {
+                                OnProgressAsync = (@event, _) =>
+                                {
+                                    fileId = @event.FileId;
+
+                                    return Task.CompletedTask;
+                                }
+                            },
+                            FileId = fileId
+                        }, HttpContext.RequestAborted);
+
+                        await Task.Delay(100, HttpContext.RequestAborted);
+                    }
                 }
             }
         }
@@ -88,6 +84,38 @@ namespace TusTestServer.Controller
             }
 
             return Ok(new { json = "Test" });
+        }
+
+        public class PauseStream : DelegateStream
+        {
+            private readonly double pauseAfter = 1;
+            private int totalRead;
+
+            public PauseStream(Stream innerStream, double pauseAfter)
+                : base(innerStream)
+            {
+                this.pauseAfter = pauseAfter;
+            }
+
+            public void Reset()
+            {
+                totalRead = 0;
+            }
+
+            public override async ValueTask<int> ReadAsync(Memory<byte> buffer,
+                CancellationToken cancellationToken = default)
+            {
+                if (totalRead >= Length * pauseAfter)
+                {
+                    throw new OperationCanceledException();
+                }
+
+                var bytesRead = await base.ReadAsync(buffer, cancellationToken);
+
+                totalRead += bytesRead;
+
+                return bytesRead;
+            }
         }
     }
 }

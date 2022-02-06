@@ -11,36 +11,42 @@ namespace Squidex.Assets
     {
         internal static readonly DelegatingProgressHandler Instance = new DelegatingProgressHandler();
 
+        public Func<UploadProgressEvent, CancellationToken, Task>? OnProgressAsync { get; set; }
+
         public Func<UploadCompletedEvent, CancellationToken, Task>? OnCompletedAsync { get; set; }
 
         public Func<UploadExceptionEvent, CancellationToken, Task>? OnFailedAsync { get; set; }
 
-        public Func<UploadProgressEvent, CancellationToken, Task>? OnProgressAsync { get; set; }
+        async Task IProgressHandler.OnProgressAsync(UploadProgressEvent @event,
+            CancellationToken ct)
+        {
+            var handler = OnProgressAsync;
+
+            if (handler != null)
+            {
+                await handler(@event, ct);
+            }
+        }
 
         async Task IProgressHandler.OnCompletedAsync(UploadCompletedEvent @event,
             CancellationToken ct)
         {
-            if (OnCompletedAsync != null)
+            var handler = OnCompletedAsync;
+
+            if (handler != null)
             {
-                await OnCompletedAsync(@event, ct);
+                await handler(@event, ct);
             }
         }
 
         async Task IProgressHandler.OnFailedAsync(UploadExceptionEvent @event,
             CancellationToken ct)
         {
-            if (OnFailedAsync != null)
-            {
-                await OnFailedAsync(@event, ct);
-            }
-        }
+            var handler = OnFailedAsync;
 
-        async Task IProgressHandler.OnProgressAsync(UploadProgressEvent @event,
-            CancellationToken ct)
-        {
-            if (OnProgressAsync != null)
+            if (handler != null)
             {
-                await OnProgressAsync(@event, ct);
+                await handler(@event, ct);
             }
         }
     }

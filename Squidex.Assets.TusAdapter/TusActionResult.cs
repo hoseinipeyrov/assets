@@ -14,6 +14,12 @@ namespace Squidex.Assets
     {
         private readonly HttpResponse response;
 
+        public int StatusCode => response.StatusCode;
+
+        public IHeaderDictionary Headers => response.Headers;
+
+        public Stream Body => response.Body;
+
         public TusActionResult(HttpResponse response)
         {
             this.response = response;
@@ -21,21 +27,21 @@ namespace Squidex.Assets
 
         public async Task ExecuteResultAsync(ActionContext context)
         {
-            if (response.StatusCode > 0)
+            if (StatusCode > 0)
             {
-                context.HttpContext.Response.StatusCode = response.StatusCode;
+                context.HttpContext.Response.StatusCode = StatusCode;
             }
 
-            foreach (var (key, value) in response.Headers)
+            foreach (var (key, value) in Headers)
             {
                 context.HttpContext.Response.Headers[key] = value;
             }
 
-            if (response.Body.Length > 0)
+            if (Body.Length > 0)
             {
-                response.Body.Seek(0, SeekOrigin.Begin);
+                Body.Seek(0, SeekOrigin.Begin);
 
-                await response.Body.CopyToAsync(context.HttpContext.Response.Body, context.HttpContext.RequestAborted);
+                await Body.CopyToAsync(context.HttpContext.Response.Body, context.HttpContext.RequestAborted);
             }
         }
     }
