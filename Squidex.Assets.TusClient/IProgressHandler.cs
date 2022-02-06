@@ -49,12 +49,16 @@ namespace Squidex.Assets
 
     public sealed class UploadExceptionEvent : UploadEvent
     {
+        public HttpResponseMessage? Response { get; }
+
         public Exception Exception { get; }
 
-        public UploadExceptionEvent(string fileId, Exception exception)
+        public UploadExceptionEvent(string fileId, Exception exception, HttpResponseMessage? response)
             : base(fileId)
         {
             Exception = exception;
+
+            Response = response;
         }
     }
 

@@ -60,6 +60,7 @@ namespace Squidex.Assets
 
             var handler = options.ProgressHandler ?? DelegatingProgressHandler.Instance;
 
+            HttpResponseMessage? response = null;
             try
             {
                 var fileId = options.FileId;
@@ -118,7 +119,7 @@ namespace Squidex.Assets
                         .WithDefaultHeaders()
                         .WithHeader(TusHeaders.UploadOffset, bytesWritten);
 
-                var response = await httpClient.SendAsync(request, ct);
+                response = await httpClient.SendAsync(request, ct);
 
                 response.EnsureSuccessStatusCode();
 
@@ -136,7 +137,7 @@ namespace Squidex.Assets
             }
             catch (Exception ex)
             {
-                await handler.OnFailedAsync(new UploadExceptionEvent(file.FileName, ex), ct);
+                await handler.OnFailedAsync(new UploadExceptionEvent(file.FileName, ex, response), ct);
             }
         }
 
