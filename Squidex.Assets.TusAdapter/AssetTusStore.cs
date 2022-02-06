@@ -306,7 +306,7 @@ namespace Squidex.Assets
 
         private static string PartName(string fileId, int index)
         {
-            return $"{fileId}_{index}";
+            return $"tus/{fileId}_{index}";
         }
 
         private static string Key(string fileId)
