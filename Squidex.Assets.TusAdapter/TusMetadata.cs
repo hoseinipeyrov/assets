@@ -13,13 +13,11 @@ namespace Squidex.Assets
 
         public string Id { get; set; }
 
-        public long? UploadLength { get; set; }
-
         public string UploadMetadata { get; set; }
 
-        public long WrittenBytes { get; set; }
+        public long? UploadLength { get; set; }
 
-        public long WrittenBytesInLastPart { get; set; }
+        public long WrittenBytes { get; set; }
 
         public int WrittenParts { get; set; }
 

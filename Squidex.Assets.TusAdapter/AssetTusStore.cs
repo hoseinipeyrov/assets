@@ -136,30 +136,27 @@ namespace Squidex.Assets
                 }
             }
 
-            var part = metadata.WrittenParts;
-
-            // Indicate that we have written a part but the size is not given yet.
-            metadata.WrittenBytesInLastPart = -1;
-            metadata.WrittenParts = part + 1;
-
             await SetMetadataAsync(fileId, metadata, cancellationToken);
+
+            var writtenBytes = 0L;
 
             using (var cancellableStream = new CancellableStream(stream, cancellationToken))
             {
-                var partName = PartName(fileId, part);
-                // Do not flow cancellation token because it is handled by the stream that stops silently.
-                var partSize = await assetStore.UploadAsync(partName, cancellableStream, true, default);
+                var partName = PartName(fileId, metadata.WrittenParts);
 
-                if (partSize < 0)
+                // Do not flow cancellation token because it is handled by the stream that stops silently.
+                writtenBytes = await assetStore.UploadAsync(partName, cancellableStream, true, default);
+
+                if (writtenBytes < 0)
                 {
-                    partSize = await assetStore.GetSizeAsync(partName, cancellationToken);
+                    writtenBytes = await assetStore.GetSizeAsync(partName, cancellationToken);
                 }
 
                 // Also update the size in the metadata.
-                metadata.WrittenBytes += partSize;
-                metadata.WrittenBytesInLastPart = partSize;
+                metadata.WrittenBytes += writtenBytes;
+                metadata.WrittenParts++;
 
-                await SetMetadataAsync(fileId, metadata, default);
+                await SetMetadataAsync(fileId, metadata, cancellationToken);
             }
 
             if (metadata.UploadLength.HasValue && metadata.WrittenBytes > metadata.UploadLength.Value)
@@ -167,7 +164,7 @@ namespace Squidex.Assets
                 throw new TusStoreException($"Stream contains more data than the file's upload length. Stream data: {metadata.WrittenBytes}, upload length: {metadata.UploadLength}.");
             }
 
-            return metadata.WrittenBytesInLastPart;
+            return writtenBytes;
         }
 
         public async Task<bool> FileExistAsync(string fileId,
@@ -198,29 +195,7 @@ namespace Squidex.Assets
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
-            if (metadata == null)
-            {
-                return 0;
-            }
-
-            if (metadata.WrittenParts > 0 && metadata.WrittenBytesInLastPart < 0)
-            {
-                var partName = PartName(fileId, metadata.WrittenParts);
-
-                // We could not update the last part in the metadata, therefore get the size now.
-                var partSize = await assetStore.GetSizeAsync(partName, default);
-
-                if (partSize > 0)
-                {
-                    // Also update the size in the metadata.
-                    metadata.WrittenBytes += partSize;
-                    metadata.WrittenBytesInLastPart = partSize;
-
-                    await SetMetadataAsync(fileId, metadata, default);
-                }
-            }
-
-            return metadata.WrittenBytes;
+            return metadata?.WrittenBytes ?? 0;
         }
 
         public async Task<long?> GetUploadLengthAsync(string fileId,

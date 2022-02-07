@@ -22,12 +22,13 @@ namespace TusTestServer.Controller
         }
 
         [Route("/upload")]
-        public async Task UploadAsync()
+        public async Task<IActionResult> UploadAsync()
         {
             using (var httpClient = new HttpClient())
             {
                 var file = UploadFile.FromPath("wwwroot/LargeImage.jpg");
 
+                var numWrites = 0;
                 var pausingStream = new PauseStream(file.Stream, 0.25);
                 var pausingFile = new UploadFile(pausingStream, file.FileName, file.ContentType);
                 var completed = false;
@@ -39,33 +40,33 @@ namespace TusTestServer.Controller
 
                     while (!completed)
                     {
-                        pausingStream.Reset();
+                        cts2.Token.ThrowIfCancellationRequested();
 
-                        var previousProgress = pausingStream.Position;
+                        pausingStream.Reset();
 
                         await httpClient.UploadWithProgressAsync(uploadUri, pausingFile, new UploadOptions
                         {
                             ProgressHandler = new DelegatingProgressHandler
                             {
-                                OnProgressAsync = (@event, _) =>
+                                OnCreatedAsync = (@event, _) =>
                                 {
                                     fileId = @event.FileId;
-
                                     return Task.CompletedTask;
                                 },
                                 OnCompletedAsync = (@event, _) =>
                                 {
                                     completed = true;
-
                                     return Task.CompletedTask;
                                 }
                             },
                             FileId = fileId
                         }, cts2.Token);
 
-                        await Task.Delay(50, cts2.Token);
+                        numWrites++;
                     }
                 }
+
+                return Ok(new { numWrites });
             }
         }
 
@@ -117,9 +118,14 @@ namespace TusTestServer.Controller
             public override async ValueTask<int> ReadAsync(Memory<byte> buffer,
                 CancellationToken cancellationToken = default)
             {
+                if (Position >= Length)
+                {
+                    return 0;
+                }
+
                 if (totalRead >= Length * pauseAfter)
                 {
-                    throw new OperationCanceledException();
+                    throw new InvalidOperationException();
                 }
 
                 var bytesRead = await base.ReadAsync(buffer, cancellationToken);
