@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.Collections.Concurrent;
-using System.Security.Cryptography;
 using Squidex.Assets.Internal;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
@@ -17,7 +16,6 @@ namespace Squidex.Assets
 {
     public sealed class AssetTusStore :
         ITusExpirationStore,
-        ITusChecksumStore,
         ITusCreationDeferLengthStore,
         ITusCreationStore,
         ITusReadableStore,
@@ -51,12 +49,6 @@ namespace Squidex.Assets
             await SetMetadataAsync(id, metadataObj, cancellationToken);
 
             return id;
-        }
-
-        public Task<IEnumerable<string>> GetSupportedAlgorithmsAsync(
-            CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IEnumerable<string>>(new[] { "sha1" });
         }
 
         public async Task SetExpirationAsync(string fileId, DateTimeOffset expires,
@@ -122,27 +114,6 @@ namespace Squidex.Assets
             }
 
             return await files.GetOrAdd(fileId, id => CreateFileAsync(id, metadata, cancellationToken));
-        }
-
-        public async Task<bool> VerifyChecksumAsync(string fileId, string algorithm, byte[] checksum,
-            CancellationToken cancellationToken)
-        {
-            var file = await GetFileAsync(fileId, cancellationToken);
-
-            if (file == null)
-            {
-                return false;
-            }
-
-            await using (var dataStream = await file.GetContentAsync(cancellationToken))
-            {
-                using (var sha1 = SHA1.Create())
-                {
-                    var calculateSha1 = await sha1.ComputeHashAsync(dataStream, cancellationToken);
-
-                    return checksum.SequenceEqual(calculateSha1);
-                }
-            }
         }
 
         public async Task<long> AppendDataAsync(string fileId, Stream stream,
