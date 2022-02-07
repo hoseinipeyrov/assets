@@ -30,12 +30,18 @@ namespace TusTestServer.Controller
 
                 var pausingStream = new PauseStream(file.Stream, 0.25);
                 var pausingFile = new UploadFile(pausingStream, file.FileName, file.ContentType);
+                var completed = false;
 
                 await using (pausingFile.Stream)
                 {
-                    while (pausingStream.Position < pausingStream.Length)
+                    using var cts = new CancellationTokenSource(10000);
+                    using var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, HttpContext.RequestAborted);
+
+                    while (!completed)
                     {
                         pausingStream.Reset();
+
+                        var previousProgress = pausingStream.Position;
 
                         await httpClient.UploadWithProgressAsync(uploadUri, pausingFile, new UploadOptions
                         {
@@ -46,12 +52,33 @@ namespace TusTestServer.Controller
                                     fileId = @event.FileId;
 
                                     return Task.CompletedTask;
+                                },
+                                OnCompletedAsync = (@event, _) =>
+                                {
+                                    completed = true;
+
+                                    return Task.CompletedTask;
                                 }
                             },
                             FileId = fileId
-                        }, HttpContext.RequestAborted);
+                        }, cts2.Token);
 
-                        await Task.Delay(100, HttpContext.RequestAborted);
+                        if (completed)
+                        {
+                            return;
+                        }
+
+                        while (true)
+                        {
+                            var length = await httpClient.GetUploadProgressAsync(uploadUri, fileId!, cts2.Token);
+
+                            if (length > previousProgress)
+                            {
+                                break;
+                            }
+
+                            await Task.Delay(20, cts2.Token);
+                        }
                     }
                 }
             }

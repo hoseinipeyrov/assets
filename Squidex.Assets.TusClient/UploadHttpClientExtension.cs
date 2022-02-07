@@ -11,6 +11,8 @@ using System.Text;
 using Microsoft.Net.Http.Headers;
 using Squidex.Assets.Internal;
 
+#pragma warning disable MA0098 // Use indexer instead of LINQ methods
+
 namespace Squidex.Assets
 {
     public static class UploadHttpClientExtension
@@ -27,36 +29,20 @@ namespace Squidex.Assets
             public const string UploadMetadata = "Upload-Metadata";
         }
 
-        public static Task UploadWithProgressAsync(this HttpClient httpClient, string url, UploadFile file, UploadOptions options = default,
+        public static Task UploadWithProgressAsync(this HttpClient httpClient, string uri, UploadFile file, UploadOptions options = default,
             CancellationToken ct = default)
         {
-            if (url == null)
-            {
-                throw new ArgumentNullException(nameof(url));
-            }
+            Guard.NotNullOrEmpty(uri, nameof(uri));
+            Guard.NotNull(file, nameof(file));
 
-            if (file == null)
-            {
-                throw new ArgumentNullException(nameof(file));
-            }
-
-            var uri = new Uri(url, UriKind.RelativeOrAbsolute);
-
-            return httpClient.UploadWithProgressAsync(uri, file, options, ct);
+            return httpClient.UploadWithProgressAsync(new Uri(uri, UriKind.RelativeOrAbsolute), file, options, ct);
         }
 
         public static async Task UploadWithProgressAsync(this HttpClient httpClient, Uri uri, UploadFile file, UploadOptions options = default,
             CancellationToken ct = default)
         {
-            if (uri == null)
-            {
-                throw new ArgumentNullException(nameof(uri));
-            }
-
-            if (file == null)
-            {
-                throw new ArgumentNullException(nameof(file));
-            }
+            Guard.NotNull(uri, nameof(uri));
+            Guard.NotNull(file, nameof(file));
 
             var handler = options.ProgressHandler ?? DelegatingProgressHandler.Instance;
 
@@ -70,7 +56,7 @@ namespace Squidex.Assets
 
                 if (!string.IsNullOrWhiteSpace(fileId))
                 {
-                    bytesWritten = await httpClient.GetSizeAsync(GetFileIdUrl(uri, fileId!), ct);
+                    bytesWritten = await httpClient.GetUploadProgressAsync(uri, fileId!, ct);
 
                     if (bytesWritten > 0)
                     {
@@ -82,8 +68,6 @@ namespace Squidex.Assets
                 {
                     fileId = await httpClient.CreateAsync(uri, file, options, ct);
                 }
-
-                var url = GetFileIdUrl(uri, fileId!);
 
                 var content = new ProgressableStreamContent(file.Stream, async bytes =>
                 {
@@ -115,7 +99,7 @@ namespace Squidex.Assets
                 content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, TusHeaders.ContentType);
 
                 var request =
-                    new HttpRequestMessage(Patch, url) { Content = content }
+                    new HttpRequestMessage(Patch, GetFileIdUrl(uri, fileId!)) { Content = content }
                         .WithDefaultHeaders()
                         .WithHeader(TusHeaders.UploadOffset, bytesWritten);
 
@@ -131,7 +115,7 @@ namespace Squidex.Assets
                     }
                     finally
                     {
-                        await httpClient.TerminateAsync(url, default);
+                        await httpClient.DeleteUploadAsync(uri, fileId!, default);
                     }
                 }
             }
@@ -139,6 +123,80 @@ namespace Squidex.Assets
             {
                 await handler.OnFailedAsync(new UploadExceptionEvent(file.FileName, ex, response), ct);
             }
+        }
+
+        public static Task<bool> DeleteUploadAsync(this HttpClient httpClient, string uri, string fileId,
+          CancellationToken ct = default)
+        {
+            Guard.NotNullOrEmpty(uri, nameof(uri));
+            Guard.NotNullOrEmpty(fileId, nameof(fileId));
+
+            return httpClient.DeleteUploadAsync(new Uri(uri, UriKind.RelativeOrAbsolute), fileId, ct);
+        }
+
+        public static async Task<bool> DeleteUploadAsync(this HttpClient httpClient, Uri uri, string fileId,
+            CancellationToken ct = default)
+        {
+            Guard.NotNull(uri, nameof(uri));
+            Guard.NotNullOrEmpty(fileId, nameof(fileId));
+
+            var request =
+                new HttpRequestMessage(HttpMethod.Delete, GetFileIdUrl(uri, fileId))
+                    .WithDefaultHeaders();
+
+            try
+            {
+                var response = await httpClient.SendAsync(request, ct);
+
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static Task<long> GetUploadProgressAsync(this HttpClient httpClient, string uri, string fileId,
+            CancellationToken ct)
+        {
+            Guard.NotNullOrEmpty(uri, nameof(uri));
+            Guard.NotNullOrEmpty(fileId, nameof(fileId));
+
+            return httpClient.GetUploadProgressAsync(new Uri(uri, UriKind.RelativeOrAbsolute), fileId, ct);
+        }
+
+        public static async Task<long> GetUploadProgressAsync(this HttpClient httpClient, Uri uri, string fileId,
+            CancellationToken ct)
+        {
+            Guard.NotNull(uri, nameof(uri));
+            Guard.NotNullOrEmpty(fileId, nameof(fileId));
+
+            var request =
+                new HttpRequestMessage(HttpMethod.Head, GetFileIdUrl(uri, fileId))
+                    .WithDefaultHeaders();
+
+            var response = await httpClient.SendAsync(request, ct);
+
+            response.CheckTusResponse();
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return 0;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            if (!response.Headers.TryGetValues(TusHeaders.UploadOffset, out var offset) || !offset.Any())
+            {
+                return 0;
+            }
+
+            if (!long.TryParse(offset.First(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedNumber))
+            {
+                return 0;
+            }
+
+            return parsedNumber;
         }
 
         private static async Task<string> CreateAsync(this HttpClient httpClient, Uri uri, UploadFile file, UploadOptions options,
@@ -185,83 +243,7 @@ namespace Squidex.Assets
 
             var locationValue = location.First().Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
 
-#pragma warning disable MA0098 // Use indexer instead of LINQ methods
             return locationValue.Last();
-#pragma warning restore MA0098 // Use indexer instead of LINQ methods
-        }
-
-        public static Task<bool> DeleteUploadAsync(this HttpClient httpClient, string url, string fileId,
-          CancellationToken ct = default)
-        {
-            if (url == null)
-            {
-                throw new ArgumentNullException(nameof(url));
-            }
-
-            var uri = new Uri(url, UriKind.RelativeOrAbsolute);
-
-            return httpClient.DeleteUploadAsync(uri, fileId, ct);
-        }
-
-        public static async Task<bool> DeleteUploadAsync(this HttpClient httpClient, Uri uri, string fileId,
-            CancellationToken ct = default)
-        {
-            if (uri == null)
-            {
-                throw new ArgumentNullException(nameof(uri));
-            }
-
-            return await TerminateAsync(httpClient, GetFileIdUrl(uri, fileId), ct);
-        }
-
-        private static async Task<bool> TerminateAsync(this HttpClient httpClient, string url,
-            CancellationToken ct)
-        {
-            var request =
-                new HttpRequestMessage(HttpMethod.Delete, url)
-                    .WithDefaultHeaders();
-
-            try
-            {
-                var response = await httpClient.SendAsync(request, ct);
-
-                return response.IsSuccessStatusCode;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private static async Task<long> GetSizeAsync(this HttpClient httpClient, string url,
-            CancellationToken ct)
-        {
-            var request =
-                new HttpRequestMessage(HttpMethod.Head, url)
-                    .WithDefaultHeaders();
-
-            var response = await httpClient.SendAsync(request, ct);
-
-            response.CheckTusResponse();
-
-            if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return 0;
-            }
-
-            response.EnsureSuccessStatusCode();
-
-            if (!response.Headers.TryGetValues(TusHeaders.UploadOffset, out var offset) || !offset.Any())
-            {
-                return 0;
-            }
-
-            if (!long.TryParse(offset.First(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedNumber))
-            {
-                return 0;
-            }
-
-            return parsedNumber;
         }
 
         private static void CheckTusResponse(this HttpResponseMessage response)
