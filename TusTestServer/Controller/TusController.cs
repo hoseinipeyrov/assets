@@ -63,22 +63,7 @@ namespace TusTestServer.Controller
                             FileId = fileId
                         }, cts2.Token);
 
-                        if (completed)
-                        {
-                            return;
-                        }
-
-                        while (true)
-                        {
-                            var length = await httpClient.GetUploadProgressAsync(uploadUri, fileId!, cts2.Token);
-
-                            if (length > previousProgress)
-                            {
-                                break;
-                            }
-
-                            await Task.Delay(20, cts2.Token);
-                        }
+                        await Task.Delay(50, cts2.Token);
                     }
                 }
             }

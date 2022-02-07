@@ -11,6 +11,8 @@ using Squidex.Assets.Internal;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
 
+#pragma warning disable MA0106 // Avoid closure by using an overload with the 'factoryArgument' parameter
+
 namespace Squidex.Assets
 {
     public sealed class AssetTusStore :
@@ -101,23 +103,25 @@ namespace Squidex.Assets
 
                 for (var i = 0; i < metadata.WrittenParts; i++)
                 {
-                    await assetStore.DownloadAsync(PartName(fileId, i), tempStream, default, ct);
+                    try
+                    {
+                        await assetStore.DownloadAsync(PartName(fileId, i), tempStream, default, ct);
+                    }
+                    catch (AssetNotFoundException)
+                    {
+                        continue;
+                    }
                 }
 
                 await CleanupAsync(metadata, default);
 
-                return AssetTusFile.Create(fileId, metadata, tempStream, x =>
+                return AssetTusFile.Create(fileId, metadata, tempStream, file =>
                 {
-                    files.TryRemove(x.Id, out _);
+                    files.TryRemove(file.Id, out _);
                 });
             }
 
-#pragma warning disable MA0106 // Avoid closure by using an overload with the 'factoryArgument' parameter
-            return await files.GetOrAdd(fileId, (x, args) =>
-            {
-                return CreateFileAsync(x, args.metadata, args.cancellationToken);
-            }, (metadata, cancellationToken));
-#pragma warning restore MA0106 // Avoid closure by using an overload with the 'factoryArgument' parameter
+            return await files.GetOrAdd(fileId, id => CreateFileAsync(id, metadata, cancellationToken));
         }
 
         public async Task<bool> VerifyChecksumAsync(string fileId, string algorithm, byte[] checksum,
@@ -144,7 +148,12 @@ namespace Squidex.Assets
         public async Task<long> AppendDataAsync(string fileId, Stream stream,
             CancellationToken cancellationToken)
         {
-            var metadata = (await GetMetadataAsync(fileId, cancellationToken)) ?? new TusMetadata();
+            var metadata = await GetMetadataAsync(fileId, cancellationToken);
+
+            if (metadata == null)
+            {
+                return 0;
+            }
 
             if (stream.GetLengthOrZero() > 0 && metadata.UploadLength.HasValue)
             {
@@ -156,27 +165,28 @@ namespace Squidex.Assets
                 }
             }
 
-            var partName = PartName(fileId, metadata.WrittenParts);
-            var partSize = -1L;
-            try
-            {
-                var cancellableStream = new CancellableStream(stream, cancellationToken);
+            var part = metadata.WrittenParts;
 
-                partSize = await assetStore.UploadAsync(partName, cancellableStream, true, default);
-            }
-            catch (OperationCanceledException)
+            // Indicate that we have written a part but the size is not given yet.
+            metadata.WrittenBytesInLastPart = -1;
+            metadata.WrittenParts = part + 1;
+
+            await SetMetadataAsync(fileId, metadata, cancellationToken);
+
+            using (var cancellableStream = new CancellableStream(stream, cancellationToken))
             {
-            }
-            finally
-            {
-                // Do not flow cancellation token here so we can save the metadata even if the request is aborted.
+                var partName = PartName(fileId, part);
+                // Do not flow cancellation token because it is handled by the stream that stops silently.
+                var partSize = await assetStore.UploadAsync(partName, cancellableStream, true, default);
+
                 if (partSize < 0)
                 {
-                    partSize = await assetStore.GetSizeAsync(partName, default);
+                    partSize = await assetStore.GetSizeAsync(partName, cancellationToken);
                 }
 
+                // Also update the size in the metadata.
                 metadata.WrittenBytes += partSize;
-                metadata.WrittenParts++;
+                metadata.WrittenBytesInLastPart = partSize;
 
                 await SetMetadataAsync(fileId, metadata, default);
             }
@@ -186,7 +196,7 @@ namespace Squidex.Assets
                 throw new TusStoreException($"Stream contains more data than the file's upload length. Stream data: {metadata.WrittenBytes}, upload length: {metadata.UploadLength}.");
             }
 
-            return partSize;
+            return metadata.WrittenBytesInLastPart;
         }
 
         public async Task<bool> FileExistAsync(string fileId,
@@ -212,6 +222,36 @@ namespace Squidex.Assets
             return result;
         }
 
+        public async Task<long> GetUploadOffsetAsync(string fileId,
+            CancellationToken cancellationToken)
+        {
+            var metadata = await GetMetadataAsync(fileId, cancellationToken);
+
+            if (metadata == null)
+            {
+                return 0;
+            }
+
+            if (metadata.WrittenParts > 0 && metadata.WrittenBytesInLastPart < 0)
+            {
+                var partName = PartName(fileId, metadata.WrittenParts);
+
+                // We could not update the last part in the metadata, therefore get the size now.
+                var partSize = await assetStore.GetSizeAsync(partName, default);
+
+                if (partSize > 0)
+                {
+                    // Also update the size in the metadata.
+                    metadata.WrittenBytes += partSize;
+                    metadata.WrittenBytesInLastPart = partSize;
+
+                    await SetMetadataAsync(fileId, metadata, default);
+                }
+            }
+
+            return metadata.WrittenBytes;
+        }
+
         public async Task<long?> GetUploadLengthAsync(string fileId,
             CancellationToken cancellationToken)
         {
@@ -226,14 +266,6 @@ namespace Squidex.Assets
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
             return metadata?.UploadMetadata;
-        }
-
-        public async Task<long> GetUploadOffsetAsync(string fileId,
-            CancellationToken cancellationToken)
-        {
-            var metadata = await GetMetadataAsync(fileId, cancellationToken);
-
-            return metadata?.WrittenBytes ?? 0;
         }
 
         public async Task<DateTimeOffset?> GetExpirationAsync(string fileId,

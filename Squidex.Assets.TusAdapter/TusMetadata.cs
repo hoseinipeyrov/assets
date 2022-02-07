@@ -19,6 +19,8 @@ namespace Squidex.Assets
 
         public long WrittenBytes { get; set; }
 
+        public long WrittenBytesInLastPart { get; set; }
+
         public int WrittenParts { get; set; }
 
         public bool Created { get; set; }
