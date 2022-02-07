@@ -156,7 +156,8 @@ namespace Squidex.Assets
                 metadata.WrittenBytes += writtenBytes;
                 metadata.WrittenParts++;
 
-                await SetMetadataAsync(fileId, metadata, cancellationToken);
+                // Do not cancel here.
+                await SetMetadataAsync(fileId, metadata, default);
             }
 
             if (metadata.UploadLength.HasValue && metadata.WrittenBytes > metadata.UploadLength.Value)
