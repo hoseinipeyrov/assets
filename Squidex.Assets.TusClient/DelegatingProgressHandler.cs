@@ -13,6 +13,8 @@ namespace Squidex.Assets
 
         public Func<UploadProgressEvent, CancellationToken, Task>? OnProgressAsync { get; set; }
 
+        public Func<UploadCreatedEvent, CancellationToken, Task>? OnCreatedAsync { get; set; }
+
         public Func<UploadCompletedEvent, CancellationToken, Task>? OnCompletedAsync { get; set; }
 
         public Func<UploadExceptionEvent, CancellationToken, Task>? OnFailedAsync { get; set; }
@@ -21,6 +23,17 @@ namespace Squidex.Assets
             CancellationToken ct)
         {
             var handler = OnProgressAsync;
+
+            if (handler != null)
+            {
+                await handler(@event, ct);
+            }
+        }
+
+        async Task IProgressHandler.OnCreatedAsync(UploadCreatedEvent @event,
+            CancellationToken ct)
+        {
+            var handler = OnCreatedAsync;
 
             if (handler != null)
             {

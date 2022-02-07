@@ -50,13 +50,14 @@ namespace Squidex.Assets
             try
             {
                 var fileId = options.FileId;
+                var isFound = false;
                 var totalProgress = 0;
                 var totalBytes = file.Stream.Length;
                 var bytesWritten = 0L;
 
                 if (!string.IsNullOrWhiteSpace(fileId))
                 {
-                    bytesWritten = await httpClient.GetUploadProgressAsync(uri, fileId!, ct);
+                    (bytesWritten, isFound) = await httpClient.GetUploadProgressCoreAsync(uri, fileId!, ct);
 
                     if (bytesWritten > 0)
                     {
@@ -64,9 +65,11 @@ namespace Squidex.Assets
                     }
                 }
 
-                if (bytesWritten == 0 || string.IsNullOrWhiteSpace(fileId))
+                if (!isFound || string.IsNullOrWhiteSpace(fileId))
                 {
                     fileId = await httpClient.CreateAsync(uri, file, options, ct);
+
+                    await handler.OnCreatedAsync(new UploadCreatedEvent(fileId), ct);
                 }
 
                 var content = new ProgressableStreamContent(file.Stream, async bytes =>
@@ -171,6 +174,13 @@ namespace Squidex.Assets
             Guard.NotNull(uri, nameof(uri));
             Guard.NotNullOrEmpty(fileId, nameof(fileId));
 
+            var (bytes, _) = await httpClient.GetUploadProgressCoreAsync(uri, fileId, ct);
+
+            return bytes;
+        }
+
+        private static async Task<(long, bool)> GetUploadProgressCoreAsync(this HttpClient httpClient, Uri uri, string fileId, CancellationToken ct)
+        {
             var request =
                 new HttpRequestMessage(HttpMethod.Head, GetFileIdUrl(uri, fileId))
                     .WithDefaultHeaders();
@@ -181,22 +191,22 @@ namespace Squidex.Assets
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                return 0;
+                return (0, false);
             }
 
             response.EnsureSuccessStatusCode();
 
             if (!response.Headers.TryGetValues(TusHeaders.UploadOffset, out var offset) || !offset.Any())
             {
-                return 0;
+                throw new InvalidOperationException("TUS is not supported for this endpoint.");
             }
 
             if (!long.TryParse(offset.First(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedNumber))
             {
-                return 0;
+                throw new InvalidOperationException("TUS is not supported for this endpoint.");
             }
 
-            return parsedNumber;
+            return (parsedNumber, true);
         }
 
         private static async Task<string> CreateAsync(this HttpClient httpClient, Uri uri, UploadFile file, UploadOptions options,

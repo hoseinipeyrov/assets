@@ -103,7 +103,7 @@ namespace Squidex.Assets
         [Theory]
         [InlineData("/files/middleware")]
         [InlineData("/files/controller")]
-        public async Task Should_upload_file_in_batches(string url)
+        public async Task Should_upload_file_in_chunks(string url)
         {
             var image = GetImage("logo.bmp");
 
@@ -114,8 +114,6 @@ namespace Squidex.Assets
 
             while (pausingStream.Position < pausingStream.Length)
             {
-                pausingStream.Reset();
-
                 await _.Client.UploadWithProgressAsync(new Uri(url, UriKind.Relative), pausingFile,
                     new UploadOptions
                     {
@@ -130,10 +128,53 @@ namespace Squidex.Assets
                         FileId = fileId
                     });
 
+                pausingStream.Reset();
+
                 numReads++;
             }
 
             Assert.Equal(4, numReads);
+
+            await HasFileAsync(image);
+        }
+
+        [Theory]
+        [InlineData("/files/middleware")]
+        [InlineData("/files/controller")]
+        public async Task Should_not_use_new_file_id_id_nothing_written_first(string url)
+        {
+            var image = GetImage("logo.bmp");
+
+            var pausingStream = new PauseStream(image.Stream, 0);
+            var pausingFile = new UploadFile(pausingStream, image.FileName, image.ContentType);
+            var fileIds = new HashSet<string>();
+
+            var numReads = 0;
+
+            while (pausingStream.Position < pausingStream.Length)
+            {
+                await _.Client.UploadWithProgressAsync(new Uri(url, UriKind.Relative), pausingFile,
+                    new UploadOptions
+                    {
+                        ProgressHandler = new DelegatingProgressHandler
+                        {
+                            OnCreatedAsync = (@event, _) =>
+                            {
+                                fileId = @event.FileId;
+                                fileIds.Add(@event.FileId);
+                                return Task.CompletedTask;
+                            }
+                        },
+                        FileId = fileId
+                    });
+
+                pausingStream.Reset(0.25);
+
+                numReads++;
+            }
+
+            Assert.Equal(5, numReads);
+            Assert.Single(fileIds);
 
             await HasFileAsync(image);
         }
@@ -184,7 +225,7 @@ namespace Squidex.Assets
 
         public class PauseStream : DelegateStream
         {
-            private readonly double pauseAfter = 1;
+            private double pauseAfter = 1;
             private int totalRead;
 
             public PauseStream(Stream innerStream, double pauseAfter)
@@ -193,9 +234,14 @@ namespace Squidex.Assets
                 this.pauseAfter = pauseAfter;
             }
 
-            public void Reset()
+            public void Reset(double? newPauseAfter = null)
             {
                 totalRead = 0;
+
+                if (newPauseAfter.HasValue)
+                {
+                    pauseAfter = newPauseAfter.Value;
+                }
             }
 
             public override async ValueTask<int> ReadAsync(Memory<byte> buffer,

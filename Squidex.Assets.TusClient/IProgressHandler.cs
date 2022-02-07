@@ -47,6 +47,14 @@ namespace Squidex.Assets
         }
     }
 
+    public sealed class UploadCreatedEvent : UploadEvent
+    {
+        public UploadCreatedEvent(string fileId)
+            : base(fileId)
+        {
+        }
+    }
+
     public sealed class UploadExceptionEvent : UploadEvent
     {
         public HttpResponseMessage? Response { get; }
@@ -65,6 +73,9 @@ namespace Squidex.Assets
     public interface IProgressHandler
     {
         Task OnProgressAsync(UploadProgressEvent @event,
+            CancellationToken ct);
+
+        Task OnCreatedAsync(UploadCreatedEvent @event,
             CancellationToken ct);
 
         Task OnCompletedAsync(UploadCompletedEvent @event,
