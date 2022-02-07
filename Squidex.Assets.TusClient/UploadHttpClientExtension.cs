@@ -107,10 +107,11 @@ namespace Squidex.Assets
                         .WithHeader(TusHeaders.UploadOffset, bytesWritten);
 
                 response = await httpClient.SendAsync(request, ct);
-
                 response.EnsureSuccessStatusCode();
 
-                if (bytesWritten == totalBytes)
+                var offset = GetOffset(response);
+
+                if (offset == totalBytes)
                 {
                     try
                     {
@@ -196,6 +197,11 @@ namespace Squidex.Assets
 
             response.EnsureSuccessStatusCode();
 
+            return (GetOffset(response), true);
+        }
+
+        private static long GetOffset(HttpResponseMessage response)
+        {
             if (!response.Headers.TryGetValues(TusHeaders.UploadOffset, out var offset) || !offset.Any())
             {
                 throw new InvalidOperationException("TUS is not supported for this endpoint.");
@@ -206,7 +212,7 @@ namespace Squidex.Assets
                 throw new InvalidOperationException("TUS is not supported for this endpoint.");
             }
 
-            return (parsedNumber, true);
+            return parsedNumber;
         }
 
         private static async Task<string> CreateAsync(this HttpClient httpClient, Uri uri, UploadFile file, UploadOptions options,

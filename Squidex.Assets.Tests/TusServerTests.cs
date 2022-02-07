@@ -110,7 +110,8 @@ namespace Squidex.Assets
             var pausingStream = new PauseStream(image.Stream, 0.25);
             var pausingFile = new UploadFile(pausingStream, image.FileName, image.ContentType);
 
-            var numReads = 0;
+            var uploads = 0;
+            var uploaded = false;
 
             while (pausingStream.Position < pausingStream.Length)
             {
@@ -123,6 +124,11 @@ namespace Squidex.Assets
                             {
                                 fileId = @event.FileId;
                                 return Task.CompletedTask;
+                            },
+                            OnCompletedAsync = (@event, _) =>
+                            {
+                                uploaded = true;
+                                return Task.CompletedTask;
                             }
                         },
                         FileId = fileId
@@ -130,10 +136,11 @@ namespace Squidex.Assets
 
                 pausingStream.Reset();
 
-                numReads++;
+                uploads++;
             }
 
-            Assert.Equal(4, numReads);
+            Assert.Equal(4, uploads);
+            Assert.True(uploaded);
 
             await HasFileAsync(image);
         }
