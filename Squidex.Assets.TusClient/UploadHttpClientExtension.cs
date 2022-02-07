@@ -109,9 +109,16 @@ namespace Squidex.Assets
                 response = await httpClient.SendAsync(request, ct);
                 response.EnsureSuccessStatusCode();
 
-                var offset = GetOffset(response);
+                var isCompleted = !response.Headers.Contains(TusHeaders.TusResumable);
 
-                if (offset == totalBytes)
+                if (!isCompleted)
+                {
+                    var offset = GetOffset(response);
+
+                    isCompleted = offset == totalBytes;
+                }
+
+                if (isCompleted)
                 {
                     try
                     {

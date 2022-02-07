@@ -25,6 +25,14 @@ namespace Squidex.Assets
             this.response = response;
         }
 
+        public void ApplyHeaders(HttpContext context)
+        {
+            foreach (var (key, value) in Headers)
+            {
+                context.Response.Headers[key] = value;
+            }
+        }
+
         public async Task ExecuteResultAsync(ActionContext context)
         {
             if (StatusCode > 0)
@@ -32,10 +40,7 @@ namespace Squidex.Assets
                 context.HttpContext.Response.StatusCode = StatusCode;
             }
 
-            foreach (var (key, value) in Headers)
-            {
-                context.HttpContext.Response.Headers[key] = value;
-            }
+            ApplyHeaders(context.HttpContext);
 
             if (Body.Length > 0)
             {

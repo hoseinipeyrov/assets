@@ -58,8 +58,14 @@ namespace Squidex.Assets
 
             if (file != null)
             {
+                // Register the file to clean it up after the request.
                 httpContext.Response.RegisterForDispose(file);
             }
+
+            var result = new TusActionResult(customContext.Response);
+
+            // Apply headers so that bypasses from the controller do not destroy the tus headers.
+            result.ApplyHeaders(httpContext);
 
             return (new TusActionResult(customContext.Response), file);
         }

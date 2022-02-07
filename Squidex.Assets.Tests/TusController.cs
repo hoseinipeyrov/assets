@@ -26,7 +26,7 @@ namespace Squidex.Assets
             if (file != null)
             {
                 TusServerFixture.Files.Add(file);
-                return result;
+                return Ok(new { id = "123" });
             }
 
             return result;
