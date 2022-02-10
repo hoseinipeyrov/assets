@@ -17,10 +17,21 @@ namespace Squidex.Assets
 {
     public sealed class ImageMagickThumbnailGenerator : IAssetThumbnailGenerator
     {
+        public Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
+            CancellationToken ct = default)
+        {
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+            Guard.NotNull(options, nameof(options));
+
+            return Task.FromResult<string?>(null);
+        }
+
         public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
             Guard.NotNull(destination, nameof(destination));
             Guard.NotNull(options, nameof(options));
 
@@ -112,6 +123,7 @@ namespace Squidex.Assets
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
             Guard.NotNull(destination, nameof(destination));
 
             using (var collection = new MagickImageCollection())
@@ -133,6 +145,7 @@ namespace Squidex.Assets
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
 
             try
             {

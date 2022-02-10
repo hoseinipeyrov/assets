@@ -69,7 +69,7 @@ namespace Squidex.Assets
 
             try
             {
-                Directory.CreateDirectory(targetFile.Directory.FullName);
+                Directory.CreateDirectory(targetFile.Directory!.FullName);
 
                 sourceFile.CopyTo(targetFile.FullName);
 
@@ -120,7 +120,7 @@ namespace Squidex.Assets
 
             var file = GetFile(fileName, nameof(fileName));
 
-            Directory.CreateDirectory(file.Directory.FullName);
+            Directory.CreateDirectory(file.Directory!.FullName);
 
             try
             {

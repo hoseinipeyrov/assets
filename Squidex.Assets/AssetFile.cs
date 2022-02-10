@@ -31,10 +31,13 @@ namespace Squidex.Assets
 
         public virtual void Dispose()
         {
+            GC.SuppressFinalize(this);
+            return;
         }
 
         public virtual ValueTask DisposeAsync()
         {
+            GC.SuppressFinalize(this);
             return default;
         }
 

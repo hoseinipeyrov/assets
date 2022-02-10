@@ -7,6 +7,7 @@
 
 using System.Net.Http.Headers;
 using System.Text;
+using Squidex.Assets.Internal;
 
 namespace Squidex.Assets.Remote
 {
@@ -22,14 +23,16 @@ namespace Squidex.Assets.Remote
             this.inner = inner;
         }
 
-        public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+        public async Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
             CancellationToken ct = default)
         {
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+            Guard.NotNull(options, nameof(options));
+
             using (var httpClient = httpClientFactory.CreateClient("Resize"))
             {
-                var query = BuildQueryString(options);
-
-                var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/resize{query}")
+                var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/blur?{BuildQueryString(options)}")
                 {
                     Content = new StreamContent(source)
                 };
@@ -39,14 +42,55 @@ namespace Squidex.Assets.Remote
                 var response = await httpClient.SendAsync(requestMessage, ct);
 
                 response.EnsureSuccessStatusCode();
+#if NET6_0
+                var result = await response.Content.ReadAsStringAsync(ct);
+#else
+                var result = await response.Content.ReadAsStringAsync();
+#endif
+                if (string.IsNullOrWhiteSpace(result))
+                {
+                    result = null;
+                }
 
+                return null;
+            }
+        }
+
+        public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+            CancellationToken ct = default)
+        {
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+            Guard.NotNull(destination, nameof(destination));
+            Guard.NotNull(options, nameof(options));
+
+            using (var httpClient = httpClientFactory.CreateClient("Resize"))
+            {
+                var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/resize{BuildQueryString(options)}")
+                {
+                    Content = new StreamContent(source)
+                };
+
+                requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+
+                var response = await httpClient.SendAsync(requestMessage, ct);
+
+                response.EnsureSuccessStatusCode();
+#if NET6_0
+                await response.Content.CopyToAsync(destination, ct);
+#else
                 await response.Content.CopyToAsync(destination);
+#endif
             }
         }
 
         public async Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default)
         {
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+            Guard.NotNull(destination, nameof(destination));
+
             using (var httpClient = httpClientFactory.CreateClient("Resize"))
             {
                 var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/orient")
@@ -59,18 +103,24 @@ namespace Squidex.Assets.Remote
                 var response = await httpClient.SendAsync(requestMessage, ct);
 
                 response.EnsureSuccessStatusCode();
-
+#if NET6_0
+                await response.Content.CopyToAsync(destination, ct);
+#else
                 await response.Content.CopyToAsync(destination);
+#endif
             }
         }
 
         public Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
             CancellationToken ct = default)
         {
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+
             return inner.GetImageInfoAsync(source, mimeType, ct);
         }
 
-        private static string BuildQueryString(ResizeOptions options)
+        private static string BuildQueryString(IOptions options)
         {
             var sb = new StringBuilder();
 

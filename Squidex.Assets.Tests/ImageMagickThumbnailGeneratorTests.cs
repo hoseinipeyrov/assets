@@ -9,6 +9,8 @@ namespace Squidex.Assets
 {
     public class ImageMagickThumbnailGeneratorTests : AssetThumbnailGeneratorTests
     {
+        protected override bool SupportsBlurHash => false;
+
         protected override HashSet<ImageFormat> SupportedFormats => new HashSet<ImageFormat>
         {
             ImageFormat.BMP,

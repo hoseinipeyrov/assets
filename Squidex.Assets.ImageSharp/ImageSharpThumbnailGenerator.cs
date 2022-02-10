@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Blurhash.ImageSharp;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Bmp;
@@ -18,6 +19,7 @@ using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Tga;
 using SixLabors.ImageSharp.Metadata.Profiles.Exif;
+using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using Squidex.Assets.Internal;
 using ISResizeMode = SixLabors.ImageSharp.Processing.ResizeMode;
@@ -27,6 +29,7 @@ namespace Squidex.Assets
 {
     public sealed class ImageSharpThumbnailGenerator : IAssetThumbnailGenerator
     {
+        private readonly Encoder blurHashEncoder = new Encoder();
         private readonly HashSet<string> mimeTypes;
 
         public ImageSharpThumbnailGenerator()
@@ -44,10 +47,31 @@ namespace Squidex.Assets
             return mimeType != null && mimeTypes.Contains(mimeType);
         }
 
+        public async Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
+            CancellationToken ct = default)
+        {
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+            Guard.NotNull(options, nameof(options));
+
+            try
+            {
+                using (var image = await Image.LoadAsync<Rgb24>(source))
+                {
+                    return blurHashEncoder.Encode(image, options.ComponentX, options.ComponentY);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
             Guard.NotNull(destination, nameof(destination));
             Guard.NotNull(options, nameof(options));
 
@@ -118,6 +142,7 @@ namespace Squidex.Assets
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
 
             try
             {
@@ -140,6 +165,7 @@ namespace Squidex.Assets
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
             Guard.NotNull(destination, nameof(destination));
 
             using (var image = Image.Load(source, out var format))

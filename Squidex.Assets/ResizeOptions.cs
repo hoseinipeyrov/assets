@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Squidex.Assets
 {
-    public sealed class ResizeOptions
+    public sealed class ResizeOptions : IOptions
     {
         public ImageFormat? Format { get; set; }
 
@@ -35,53 +35,53 @@ namespace Squidex.Assets
             get { return TargetWidth > 0 || TargetHeight > 0 || Quality > 0 || Format != null; }
         }
 
-        public IEnumerable<KeyValuePair<string, string>> ToParameters()
+        public IEnumerable<(string, string)> ToParameters()
         {
             if (Mode != default)
             {
-                yield return new KeyValuePair<string, string>("mode", Mode.ToString());
+                yield return ("mode", Mode.ToString());
             }
 
             if (Format != null)
             {
-                yield return new KeyValuePair<string, string>("format", Format.ToString());
+                yield return ("format", Format.ToString()!);
             }
 
             if (TargetWidth != null)
             {
-                yield return new KeyValuePair<string, string>("targetWidth", TargetWidth.ToString());
+                yield return ("targetWidth", TargetWidth!.ToString()!);
             }
 
             if (TargetHeight != null)
             {
-                yield return new KeyValuePair<string, string>("targetHeight", TargetHeight.ToString());
+                yield return ("targetHeight", TargetHeight.ToString()!);
             }
 
             if (Quality != null)
             {
-                yield return new KeyValuePair<string, string>("quality", Quality.ToString());
+                yield return ("quality", Quality.ToString()!);
             }
 
             if (FocusX != null)
             {
-                yield return new KeyValuePair<string, string>("focusX", FocusX.ToString());
+                yield return ("focusX", FocusX.ToString()!);
             }
 
             if (FocusY != null)
             {
-                yield return new KeyValuePair<string, string>("focusY", FocusY.ToString());
+                yield return ("focusY", FocusY.ToString()!);
             }
 
             if (Background != null)
             {
-                yield return new KeyValuePair<string, string>("background", Background);
+                yield return ("background", Background);
             }
 
             if (ExtraParameters != null)
             {
                 foreach (var kvp in ExtraParameters)
                 {
-                    yield return kvp;
+                    yield return (kvp.Key, kvp.Value);
                 }
             }
         }
@@ -90,44 +90,65 @@ namespace Squidex.Assets
         {
             var result = new ResizeOptions();
 
-            if (parameters.TryGetValue("mode", out var temp) && Enum.TryParse<ResizeMode>(temp, out var mode))
+            bool TryParseEnum<T>(string key, out T value) where T : struct
+            {
+                value = default(T);
+
+                return parameters.TryGetValue(key, out var temp) && Enum.TryParse<T>(temp, out value);
+            }
+
+            bool TryParseInt(string key, out int value)
+            {
+                value = 0;
+
+                return parameters.TryGetValue(key, out var temp) && int.TryParse(temp, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+            }
+
+            bool TryParseFloat(string key, out float value)
+            {
+                value = 0;
+
+                return parameters.TryGetValue(key, out var temp) && float.TryParse(temp, NumberStyles.Any, CultureInfo.InvariantCulture, out value);
+            }
+
+            if (TryParseEnum<ResizeMode>("mode", out var mode))
             {
                 result.Mode = mode;
             }
 
-            if (parameters.TryGetValue("format", out temp) && Enum.TryParse<ImageFormat>(temp, out var format))
+            if (TryParseEnum<ImageFormat>("format", out var format))
             {
                 result.Format = format;
             }
 
-            if (parameters.TryGetValue("targetWidth", out temp) && int.TryParse(temp, NumberStyles.Integer, CultureInfo.InvariantCulture, out var targetWidth))
+            if (TryParseInt("targetWidth", out var targetWidth))
             {
                 result.TargetWidth = targetWidth;
             }
 
-            if (parameters.TryGetValue("targetHeight", out temp) && int.TryParse(temp, NumberStyles.Integer, CultureInfo.InvariantCulture, out var targetHeight))
+            if (TryParseInt("targetHeight", out var targetHeight))
             {
                 result.TargetHeight = targetHeight;
             }
 
-            if (parameters.TryGetValue("quality", out temp) && int.TryParse(temp, NumberStyles.Integer, CultureInfo.InvariantCulture, out var quality))
+            if (TryParseInt("quality", out var quality))
             {
                 result.Quality = quality;
             }
 
-            if (parameters.TryGetValue("focusX", out temp) && float.TryParse(temp, NumberStyles.Integer, CultureInfo.InvariantCulture, out var focusX))
+            if (TryParseFloat("focusX", out var focusX))
             {
                 result.FocusX = focusX;
             }
 
-            if (parameters.TryGetValue("focusY", out temp) && float.TryParse(temp, NumberStyles.Integer, CultureInfo.InvariantCulture, out var focusY))
+            if (TryParseFloat("focusY", out var focusY))
             {
                 result.FocusY = focusY;
             }
 
-            if (parameters.TryGetValue("background", out temp))
+            if (parameters.TryGetValue("background", out var background))
             {
-                result.Background = temp;
+                result.Background = background;
             }
 
             return result;
@@ -138,14 +159,14 @@ namespace Squidex.Assets
             var sb = new StringBuilder();
 
             sb.Append(TargetWidth);
-            sb.Append("_");
+            sb.Append('_');
             sb.Append(TargetHeight);
-            sb.Append("_");
+            sb.Append('_');
             sb.Append(Mode);
 
             if (Quality.HasValue)
             {
-                sb.Append("_");
+                sb.Append('_');
                 sb.Append(Quality);
             }
 

@@ -76,6 +76,7 @@ namespace Squidex.Assets
 
         public override ValueTask DisposeAsync()
         {
+            GC.SuppressFinalize(this);
             return innerStream.DisposeAsync();
         }
 

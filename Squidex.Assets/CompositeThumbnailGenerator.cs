@@ -5,6 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Assets.Internal;
+
 namespace Squidex.Assets
 {
     public sealed class CompositeThumbnailGenerator : IAssetThumbnailGenerator
@@ -37,6 +39,11 @@ namespace Squidex.Assets
         public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+            Guard.NotNull(destination, nameof(destination));
+            Guard.NotNull(options, nameof(options));
+
             await maxTasks.WaitAsync(ct);
             try
             {
@@ -67,6 +74,10 @@ namespace Squidex.Assets
         public async Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default)
         {
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+            Guard.NotNull(destination, nameof(destination));
+
             await maxTasks.WaitAsync(ct);
             try
             {
@@ -87,9 +98,34 @@ namespace Squidex.Assets
             throw new InvalidOperationException("No thumbnail generator registered.");
         }
 
+        public async Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
+            CancellationToken ct = default)
+        {
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+            Guard.NotNull(options, nameof(options));
+
+            foreach (var inner in inners.Where(x => x.CanRead(mimeType)))
+            {
+                var result = await inner.ComputeBlurHashAsync(source, mimeType, options, ct);
+
+                if (result != null)
+                {
+                    return result;
+                }
+
+                source.Position = 0;
+            }
+
+            return null;
+        }
+
         public async Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
             CancellationToken ct = default)
         {
+            Guard.NotNull(source, nameof(source));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+
             foreach (var inner in inners)
             {
                 var result = await inner.GetImageInfoAsync(source, mimeType, ct);

@@ -22,6 +22,9 @@ namespace Squidex.Assets
         Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
             CancellationToken ct = default);
 
+        Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
+            CancellationToken ct = default);
+
         Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default);
 

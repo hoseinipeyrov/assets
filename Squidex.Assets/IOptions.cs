@@ -7,16 +7,8 @@
 
 namespace Squidex.Assets
 {
-    public class MagicThumbnailGeneratorTests : AssetThumbnailGeneratorTests
+    public interface IOptions
     {
-        protected override string Name()
-        {
-            return "magick";
-        }
-
-        protected override IAssetThumbnailGenerator CreateSut()
-        {
-            return new ImageMagickThumbnailGenerator();
-        }
+        IEnumerable<(string, string)> ToParameters();
     }
 }

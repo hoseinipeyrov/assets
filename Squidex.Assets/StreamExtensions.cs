@@ -37,7 +37,7 @@ namespace Squidex.Assets
                     ct.ThrowIfCancellationRequested();
 
                     var readLength = (int)Math.Min(buffer.Length, bytesLeft);
-
+#pragma warning disable CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
                     var read = await source.ReadAsync(buffer, 0, readLength, ct);
 
                     bytesLeft -= read;
@@ -50,6 +50,7 @@ namespace Squidex.Assets
                     ct.ThrowIfCancellationRequested();
 
                     await target.WriteAsync(buffer, 0, read, ct);
+#pragma warning restore CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
                 }
             }
             finally

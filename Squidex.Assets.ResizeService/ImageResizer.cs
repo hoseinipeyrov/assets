@@ -20,23 +20,58 @@ namespace Squidex.Assets.ResizeService
 
         public void Map(IEndpointRouteBuilder endpoints)
         {
-            endpoints.MapPost("/resize", async context =>
+            endpoints.MapPost("/blur", async context =>
             {
-                await ResizeAsync(context);
+                await BlurAsync(context);
             });
 
             endpoints.MapPost("/orient", async context =>
             {
                 await OrientAsync(context);
             });
+
+            endpoints.MapPost("/resize", async context =>
+            {
+                await ResizeAsync(context);
+            });
+        }
+
+        private async Task BlurAsync(HttpContext context)
+        {
+            await using var tempStream = GetTempStream();
+
+            await ReadToTempStreamAsync(context, tempStream);
+
+            try
+            {
+                var options = BlurOptions.Parse(context.Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
+
+                var hash = await assetThumbnailGenerator.ComputeBlurHashAsync(
+                    tempStream,
+                    context.Request.ContentType ?? "image/png",
+                    options,
+                    context.RequestAborted);
+
+                if (hash != null)
+                {
+                    await context.Response.WriteAsync(hash, context.RequestAborted);
+                }
+            }
+            catch (Exception ex)
+            {
+                var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
+
+                log.LogError(ex, "Failed to orient image.");
+
+                context.Response.StatusCode = 400;
+            }
         }
 
         private async Task OrientAsync(HttpContext context)
         {
             await using var tempStream = GetTempStream();
 
-            await context.Request.Body.CopyToAsync(tempStream, context.RequestAborted);
-            tempStream.Position = 0;
+            await ReadToTempStreamAsync(context, tempStream);
 
             try
             {
@@ -48,11 +83,9 @@ namespace Squidex.Assets.ResizeService
             }
             catch (Exception ex)
             {
-                var log = context.RequestServices.GetRequiredService<ISemanticLog>();
+                var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
 
-                log.LogError(ex, w => w
-                    .WriteProperty("action", "Resize")
-                    .WriteProperty("status", "Failed"));
+                log.LogError(ex, "Failed to orient image.");
 
                 context.Response.StatusCode = 400;
             }
@@ -62,8 +95,7 @@ namespace Squidex.Assets.ResizeService
         {
             await using var tempStream = GetTempStream();
 
-            await context.Request.Body.CopyToAsync(tempStream, context.RequestAborted);
-            tempStream.Position = 0;
+            await ReadToTempStreamAsync(context, tempStream);
 
             try
             {
@@ -77,14 +109,19 @@ namespace Squidex.Assets.ResizeService
             }
             catch (Exception ex)
             {
-                var log = context.RequestServices.GetRequiredService<ISemanticLog>();
+                var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
 
-                log.LogError(ex, w => w
-                    .WriteProperty("action", "Resize")
-                    .WriteProperty("status", "Failed"));
+                log.LogError(ex, "Failed to resize image.");
 
                 context.Response.StatusCode = 400;
             }
+        }
+
+        private static async Task ReadToTempStreamAsync(HttpContext context, Stream tempStream)
+        {
+            await context.Request.Body.CopyToAsync(tempStream, context.RequestAborted);
+
+            tempStream.Position = 0;
         }
 
         private static Stream GetTempStream()

@@ -31,11 +31,11 @@ namespace Squidex.Assets
         {
             var services =
                 new ServiceCollection()
-                .AddHttpClient("Resize", options =>
-                {
-                    options.BaseAddress = new Uri("https://squidex-resizer-public-ylxt3nzaaq-ew.a.run.app/");
-                }).Services
-                .BuildServiceProvider();
+                    .AddHttpClient("Resize", options =>
+                    {
+                        options.BaseAddress = new Uri("http://localhost:5005");
+                    }).Services
+                    .BuildServiceProvider();
 
             var httpClientFactory = services.GetRequiredService<IHttpClientFactory>();
 

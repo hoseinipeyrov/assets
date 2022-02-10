@@ -46,6 +46,8 @@ namespace Squidex.Assets
 
         protected virtual HashSet<ImageFormat> SupportedFormats { get; }
 
+        protected virtual bool SupportsBlurHash => true;
+
         [Theory]
         [MemberData(nameof(GetConversions))]
         public async Task Should_convert_between_formats(ImageFormat sourceFormat, ImageFormat targetFormat)
@@ -371,6 +373,36 @@ namespace Squidex.Assets
             Assert.Equal(135, imageInfo!.PixelWidth);
 
             Assert.Equal(ImageOrientation.LeftBottom, imageInfo.Orientation);
+        }
+
+        [Fact]
+        public async Task Should_compute_blur_hash_from_jpg()
+        {
+            var (mimeType, source) = GetImage(ImageFormat.JPEG);
+
+            var blurHash = await sut.ComputeBlurHashAsync(source, mimeType, new BlurOptions());
+
+            Assert.True(SupportsBlurHash ? blurHash != null : blurHash == null);
+        }
+
+        [Fact]
+        public async Task Should_compute_blur_hash_from_png()
+        {
+            var (mimeType, source) = GetImage(ImageFormat.PNG);
+
+            var blurHash = await sut.ComputeBlurHashAsync(source, mimeType, new BlurOptions());
+
+            Assert.True(SupportsBlurHash ? blurHash != null : blurHash == null);
+        }
+
+        [Fact]
+        public async Task Should_compute_blur_hash_from_webp()
+        {
+            var (mimeType, source) = GetImage(ImageFormat.WEBP);
+
+            var blurHash = await sut.ComputeBlurHashAsync(source, mimeType, new BlurOptions());
+
+            Assert.Null(blurHash);
         }
 
         [Fact]
