@@ -124,7 +124,7 @@ namespace Squidex.Assets
             var client = await GetClientAsync(ct);
             try
             {
-                await using (var ftpStream = await client.OpenReadAsync(name, range.From ?? 0, ct))
+                await using (var ftpStream = await client.OpenReadAsync(name, FtpDataType.Binary, range.From ?? 0, true, ct))
                 {
                     await ftpStream.CopyToAsync(stream, range, ct, false);
                 }

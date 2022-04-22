@@ -402,7 +402,7 @@ namespace Squidex.Assets
 
             var blurHash = await sut.ComputeBlurHashAsync(source, mimeType, new BlurOptions());
 
-            Assert.Null(blurHash);
+            Assert.True(SupportsBlurHash ? blurHash != null : blurHash == null);
         }
 
         [Fact]

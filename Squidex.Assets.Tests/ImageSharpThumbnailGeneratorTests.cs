@@ -15,7 +15,9 @@ namespace Squidex.Assets
             ImageFormat.PNG,
             ImageFormat.GIF,
             ImageFormat.JPEG,
-            ImageFormat.TGA
+            ImageFormat.TGA,
+            ImageFormat.TIFF,
+            ImageFormat.WEBP
         };
 
         protected override string Name()

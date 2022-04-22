@@ -18,6 +18,8 @@ using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Tga;
+using SixLabors.ImageSharp.Formats.Tiff;
+using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -56,7 +58,7 @@ namespace Squidex.Assets
 
             try
             {
-                using (var image = await Image.LoadAsync<Rgb24>(source))
+                using (var image = await Image.LoadAsync<Rgb24>(source, ct))
                 {
                     return blurHashEncoder.Encode(image, options.ComponentX, options.ComponentY);
                 }
@@ -200,8 +202,14 @@ namespace Squidex.Assets
                 case TgaFormat:
                     format = ImageFormat.TGA;
                     break;
+                case TiffFormat:
+                    format = ImageFormat.TIFF;
+                    break;
                 case GifFormat:
                     format = ImageFormat.GIF;
+                    break;
+                case WebpFormat:
+                    format = ImageFormat.WEBP;
                     break;
             }
 
