@@ -7,6 +7,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ImageMagick;
@@ -48,9 +49,20 @@ namespace Squidex.Assets
             {
                 await collection.ReadAsync(source, GetFormat(mimeType), ct);
 
+                var firstImage = collection[0];
+                var firstFormat = firstImage.Format;
+
+                var targetFormat = options.GetFormat(firstFormat);
+                var targetFormatInfo = MagickFormatInfo.Create(targetFormat);
+
                 collection.Coalesce();
 
-                foreach (var image in collection)
+                var images =
+                    targetFormatInfo?.IsMultiFrame == true ?
+                    collection :
+                    collection.Take(1);
+
+                foreach (var image in images)
                 {
                     var clone = image.Clone();
 
@@ -110,12 +122,14 @@ namespace Squidex.Assets
                     }
                 }
 
-                var firstImage = collection[0];
-                var firstFormat = firstImage.Format;
-
-                var targetFormat = options.GetFormat(firstFormat);
-
-                await collection.WriteAsync(destination, targetFormat, ct);
+                if (targetFormatInfo?.IsMultiFrame == true)
+                {
+                    await collection.WriteAsync(destination, targetFormat, ct);
+                }
+                else
+                {
+                    await collection[0].WriteAsync(destination, targetFormat, ct);
+                }
             }
         }
 
