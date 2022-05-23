@@ -13,6 +13,7 @@
     <None Remove="Images\feather.png" />
     <None Remove="Images\landscape.png" />
     <None Remove="Images\logo-wide-rotated.jpeg" />
+    <None Remove="Images\logo.avif" />
     <None Remove="Images\logo.bmp" />
     <None Remove="Images\logo.gif" />
     <None Remove="Images\logo.jpeg" />
@@ -29,16 +30,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="FakeItEasy" Version="7.3.1" />
-    <PackageReference Include="Meziantou.Analyzer" Version="1.0.698">
+    <PackageReference Include="Meziantou.Analyzer" Version="1.0.702">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.3" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.5" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
     <PackageReference Include="RefactoringEssentials" Version="5.6.0" PrivateAssets="all" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
     <PackageReference Include="xunit" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -49,9 +50,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Images\logo.avif" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="Images\feather.png" />
     <EmbeddedResource Include="Images\landscape.png" />
     <EmbeddedResource Include="Images\logo-wide-rotated.jpeg" />
+    <EmbeddedResource Include="Images\logo.avif" />
     <EmbeddedResource Include="Images\logo.bmp" />
     <EmbeddedResource Include="Images\logo.gif" />
     <EmbeddedResource Include="Images\logo.jpeg" />

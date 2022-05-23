@@ -74,6 +74,9 @@ namespace Squidex.Assets.Internal
 
             switch (options.Format)
             {
+                case ImageFormat.AVIF:
+                    result = MagickFormat.Avif;
+                    break;
                 case ImageFormat.BMP:
                     result = MagickFormat.Bmp;
                     break;
@@ -125,6 +128,8 @@ namespace Squidex.Assets.Internal
         {
             switch (format)
             {
+                case MagickFormat.Avif:
+                    return ImageFormat.AVIF;
                 case MagickFormat.Bmp:
                 case MagickFormat.Bmp2:
                 case MagickFormat.Bmp3:

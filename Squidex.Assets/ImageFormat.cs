@@ -9,6 +9,7 @@ namespace Squidex.Assets
 {
     public enum ImageFormat
     {
+        AVIF,
         BMP,
         GIF,
         JPEG,

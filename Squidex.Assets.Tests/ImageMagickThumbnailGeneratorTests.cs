@@ -13,6 +13,7 @@ namespace Squidex.Assets
 
         protected override HashSet<ImageFormat> SupportedFormats => new HashSet<ImageFormat>
         {
+            ImageFormat.AVIF,
             ImageFormat.BMP,
             ImageFormat.PNG,
             ImageFormat.GIF,

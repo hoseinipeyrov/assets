@@ -177,6 +177,14 @@ namespace Squidex.Assets
             {
                 format = MagickFormat.Tga;
             }
+            else if (string.Equals(mimeType, "image/avif", StringComparison.OrdinalIgnoreCase))
+            {
+                format = MagickFormat.Avif;
+            }
+            else if (string.Equals(mimeType, "image/bmp", StringComparison.OrdinalIgnoreCase))
+            {
+                format = MagickFormat.Bmp;
+            }
 
             return format;
         }

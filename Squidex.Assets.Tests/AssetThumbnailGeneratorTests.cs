@@ -73,7 +73,7 @@ namespace Squidex.Assets
 
                 target.Position = 0;
 
-                var imageInfo = await sut.GetImageInfoAsync(target, targetFormat.ToMimeType());
+                var imageInfo = await sut.GetImageInfoAsync(target, targetFormat.ToMimeType()!);
 
                 Assert.Equal(targetFormat, imageInfo?.Format);
             }
