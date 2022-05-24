@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -29,7 +30,7 @@ namespace Squidex.Assets
             return Task.FromResult<string?>(null);
         }
 
-        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, string[] destinationMimeTypes, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, IReadOnlyList<string> destinationMimeTypes, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
             var w = options.TargetWidth ?? 0;

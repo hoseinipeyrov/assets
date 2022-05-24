@@ -34,7 +34,7 @@ namespace Squidex.Assets
             return inners.Any(x => x.CanComputeBlurHash());
         }
 
-        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, string[] destinationMimeTypes, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, IReadOnlyList<string> destinationMimeTypes, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
             await maxTasks.WaitAsync(ct);

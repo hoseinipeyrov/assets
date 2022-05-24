@@ -59,7 +59,7 @@ namespace Squidex.Assets
             }
         }
 
-        public static IEnumerable<string> GetDestinationMimeTypes(this ResizeOptions options, string actualMimeType)
+        public static IEnumerable<string> GetDestinationMimeTypes(this ResizeOptions options)
         {
             if (options.Formats != null)
             {
@@ -69,7 +69,10 @@ namespace Squidex.Assets
                 }
             }
 
-            yield return options.Format?.ToMimeType() ?? actualMimeType;
+            if (options.Format != null)
+            {
+                yield return options.Format.Value.ToMimeType();
+            }
         }
     }
 }

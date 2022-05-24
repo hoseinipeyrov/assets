@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System;
+using System.Collections.Generic;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
@@ -15,7 +16,7 @@ namespace Squidex.Assets.Internal
 {
     internal static class Extensions
     {
-        public static IImageEncoder GetEncoder(this ResizeOptions options, string[] mimeTypes, IImageFormat format)
+        public static IImageEncoder GetEncoder(this ResizeOptions options, IReadOnlyList<string> mimeTypes, IImageFormat format)
         {
             var imageFormatsManager = Configuration.Default.ImageFormatsManager;
 

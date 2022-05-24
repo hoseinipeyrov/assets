@@ -33,11 +33,11 @@ namespace Squidex.Assets
             }
 
             // The mime types are ordered by priority.
-            var destinationMimeTypes = options.GetDestinationMimeTypes(mimeType).Where(CanReadAndWrite).ToArray();
+            var destinationMimeTypes = options.GetDestinationMimeTypes().Where(CanReadAndWrite).ToArray();
 
             if (options.IsResize || !destinationMimeTypes.Contains(mimeType, StringComparer.OrdinalIgnoreCase) || options.Force)
             {
-                destinationMimeType = destinationMimeTypes[0];
+                destinationMimeType = destinationMimeTypes.FirstOrDefault() ?? mimeType;
                 return true;
             }
 
@@ -116,12 +116,15 @@ namespace Squidex.Assets
             }
 
             // The mime types are ordered by priority.
-            var destinationMimeTypes = options.GetDestinationMimeTypes(mimeType).Where(CanReadAndWrite).ToArray();
+            var destinationMimeTypes = options.GetDestinationMimeTypes().Where(CanReadAndWrite).ToList();
+
+            // The current mime type is also an option.
+            destinationMimeTypes.Add(mimeType);
 
             await CreateThumbnailCoreAsync(source, mimeType, destinationMimeTypes, destination, options, ct);
         }
 
-        protected abstract Task CreateThumbnailCoreAsync(Stream source, string mimeType, string[] destinationMimeTypes, Stream destination, ResizeOptions options,
+        protected abstract Task CreateThumbnailCoreAsync(Stream source, string mimeType, IReadOnlyList<string> destinationMimeTypes, Stream destination, ResizeOptions options,
             CancellationToken ct = default);
     }
 }

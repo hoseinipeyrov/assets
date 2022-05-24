@@ -210,6 +210,42 @@ namespace Squidex.Assets
             await Resize("boxpad.colored", "red", ResizeMode.BoxPad);
         }
 
+        [Fact]
+        public void Should_be_resizable_if_resizing()
+        {
+            var result = sut.IsResizable("image/png", new ResizeOptions { TargetWidth = 100 }, out var destimationMimeType);
+
+            Assert.True(result);
+            Assert.Equal("image/png", destimationMimeType);
+        }
+
+        [Fact]
+        public void Should_be_resizable_if_no_format_matchs()
+        {
+            var result = sut.IsResizable("image/png", new ResizeOptions { Formats = new[] { ImageFormat.WEBP } }, out var destimationMimeType);
+
+            Assert.True(result);
+            Assert.Equal("image/webp", destimationMimeType);
+        }
+
+        [Fact]
+        public void Should_be_resizable_if_format_does_not_match()
+        {
+            var result = sut.IsResizable("image/png", new ResizeOptions { Format = ImageFormat.WEBP }, out var destimationMimeType);
+
+            Assert.True(result);
+            Assert.Equal("image/webp", destimationMimeType);
+        }
+
+        [Fact]
+        public void Should_not_be_resizable_if_format_does_match()
+        {
+            var result = sut.IsResizable("image/png", new ResizeOptions { Format = ImageFormat.PNG }, out var destimationMimeType);
+
+            Assert.False(result);
+            Assert.Null(destimationMimeType);
+        }
+
         private async Task Resize(string name, string? color, ResizeMode mode)
         {
             var (mimeType, source) = GetImage("logo.png");

@@ -65,7 +65,7 @@ namespace Squidex.Assets
             }
         }
 
-        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, string[] destinationMimeTypes, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, IReadOnlyList<string> destinationMimeTypes, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
             var w = options.TargetWidth ?? 0;

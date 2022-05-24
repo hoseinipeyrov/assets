@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using ImageMagick;
 
@@ -69,7 +70,7 @@ namespace Squidex.Assets.Internal
             }
         }
 
-        public static MagickFormat GetFormat(this string[] mimeTypes, MagickFormat format)
+        public static MagickFormat GetFormat(this IReadOnlyList<string> mimeTypes, MagickFormat format)
         {
             var result = format;
 
