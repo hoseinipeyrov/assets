@@ -5,19 +5,17 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Squidex.Assets
 {
     public interface IAssetThumbnailGenerator
     {
-        bool CanRead(string mimeType)
-        {
-            return true;
-        }
+        bool CanReadAndWrite(string mimeType);
 
-        bool CanWrite(string mimeType)
-        {
-            return true;
-        }
+        bool CanComputeBlurHash();
+
+        bool IsResizable(string mimeType, ResizeOptions options, [MaybeNullWhen(false)] out string? destinationMimeType);
 
         Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
             CancellationToken ct = default);

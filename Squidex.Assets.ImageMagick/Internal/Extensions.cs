@@ -6,11 +6,12 @@
 // ==========================================================================
 
 using System;
+using System.Linq;
 using ImageMagick;
 
 namespace Squidex.Assets.Internal
 {
-    internal static class ImageMagickExtensions
+    internal static class Extensions
     {
         public static MagickColor ParseColor(this ResizeOptions options)
         {
@@ -68,11 +69,11 @@ namespace Squidex.Assets.Internal
             }
         }
 
-        public static MagickFormat GetFormat(this ResizeOptions options, MagickFormat format)
+        public static MagickFormat GetFormat(this string[] mimeTypes, MagickFormat format)
         {
             var result = format;
 
-            switch (options.Format)
+            switch (mimeTypes.FirstOrDefault()?.ToImageFormat())
             {
                 case ImageFormat.AVIF:
                     result = MagickFormat.Avif;

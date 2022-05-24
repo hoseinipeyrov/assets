@@ -34,7 +34,7 @@ namespace Squidex.Assets
             }
         }
 
-        public static string? ToMimeType(this ImageFormat format)
+        public static string ToMimeType(this ImageFormat format)
         {
             switch (format)
             {
@@ -55,8 +55,21 @@ namespace Squidex.Assets
                 case ImageFormat.WEBP:
                     return "image/webp";
                 default:
-                    return null;
+                    throw new ArgumentException("Invalid format.", nameof(format));
             }
+        }
+
+        public static IEnumerable<string> GetDestinationMimeTypes(this ResizeOptions options, string actualMimeType)
+        {
+            if (options.Formats != null)
+            {
+                foreach (var format in options.Formats)
+                {
+                    yield return format.ToMimeType();
+                }
+            }
+
+            yield return options.Format?.ToMimeType() ?? actualMimeType;
         }
     }
 }

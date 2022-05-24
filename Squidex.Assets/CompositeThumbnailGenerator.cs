@@ -5,11 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Assets.Internal;
-
 namespace Squidex.Assets
 {
-    public sealed class CompositeThumbnailGenerator : IAssetThumbnailGenerator
+    public sealed class CompositeThumbnailGenerator : AssetThumbnailGeneratorBase
     {
         private readonly SemaphoreSlim maxTasks;
         private readonly IEnumerable<IAssetThumbnailGenerator> inners;
@@ -26,40 +24,32 @@ namespace Squidex.Assets
             this.inners = inners;
         }
 
-        public bool CanRead(string mimeType)
+        public override bool CanReadAndWrite(string mimeType)
         {
-            return mimeType != null && inners.Any(x => x.CanRead(mimeType));
+            return mimeType != null && inners.Any(x => x.CanReadAndWrite(mimeType));
         }
 
-        public bool CanWrite(string mimeType)
+        public override bool CanComputeBlurHash()
         {
-            return mimeType != null && inners.Any(x => x.CanWrite(mimeType));
+            return inners.Any(x => x.CanComputeBlurHash());
         }
 
-        public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, string[] destinationMimeTypes, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(destination, nameof(destination));
-            Guard.NotNull(options, nameof(options));
-
             await maxTasks.WaitAsync(ct);
             try
             {
-                var destinationMimeTime = mimeType;
-
-                if (options.Format.HasValue)
+                // Find the best candidate for the destination mime type.
+                foreach (var destinationMimeType in destinationMimeTypes)
                 {
-                    destinationMimeTime = options.Format.Value.ToMimeType();
-                }
-
-                foreach (var inner in inners)
-                {
-                    if (inner.CanWrite(mimeType) && inner.CanWrite(destinationMimeTime))
+                    foreach (var inner in inners)
                     {
-                        await inner.CreateThumbnailAsync(source, mimeType, destination, options, ct);
-                        return;
+                        if (inner.CanReadAndWrite(mimeType))
+                        {
+                            await inner.CreateThumbnailAsync(source, mimeType, destination, options, ct);
+                            return;
+                        }
                     }
                 }
             }
@@ -71,19 +61,15 @@ namespace Squidex.Assets
             await source.CopyToAsync(destination, ct);
         }
 
-        public async Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
+        protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(destination, nameof(destination));
-
             await maxTasks.WaitAsync(ct);
             try
             {
                 foreach (var inner in inners)
                 {
-                    if (inner.CanRead(mimeType) && inner.CanRead(mimeType))
+                    if (inner.CanReadAndWrite(mimeType))
                     {
                         await inner.FixOrientationAsync(source, mimeType, destination, ct);
                         return;
@@ -98,14 +84,10 @@ namespace Squidex.Assets
             throw new InvalidOperationException("No thumbnail generator registered.");
         }
 
-        public async Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
+        protected override async Task<string?> ComputeBlurHashCoreAsync(Stream source, string mimeType, BlurOptions options,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(options, nameof(options));
-
-            foreach (var inner in inners.Where(x => x.CanRead(mimeType)))
+            foreach (var inner in inners.Where(x => x.CanReadAndWrite(mimeType) && x.CanComputeBlurHash()))
             {
                 var result = await inner.ComputeBlurHashAsync(source, mimeType, options, ct);
 
@@ -120,12 +102,9 @@ namespace Squidex.Assets
             return null;
         }
 
-        public async Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
+        protected override async Task<ImageInfo?> GetImageInfoCoreAsync(Stream source, string mimeType,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-
             foreach (var inner in inners)
             {
                 var result = await inner.GetImageInfoAsync(source, mimeType, ct);

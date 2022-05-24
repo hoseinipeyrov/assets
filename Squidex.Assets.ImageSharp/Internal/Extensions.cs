@@ -15,13 +15,20 @@ namespace Squidex.Assets.Internal
 {
     internal static class Extensions
     {
-        public static IImageEncoder GetEncoder(this ResizeOptions options, IImageFormat format)
+        public static IImageEncoder GetEncoder(this ResizeOptions options, string[] mimeTypes, IImageFormat format)
         {
             var imageFormatsManager = Configuration.Default.ImageFormatsManager;
 
-            if (options.Format != null)
+            foreach (var mimeType in mimeTypes)
             {
-                format = imageFormatsManager.FindFormatByMimeType(options.Format.Value.ToMimeType()) ?? format;
+                var mimeTypeFormat = imageFormatsManager.FindFormatByMimeType(mimeType);
+
+                // Use the best matching format.
+                if (mimeTypeFormat != null)
+                {
+                    format = mimeTypeFormat;
+                    break;
+                }
             }
 
             var encoder = imageFormatsManager.FindEncoder(format);

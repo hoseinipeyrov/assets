@@ -16,32 +16,22 @@ using Squidex.Assets.Internal;
 
 namespace Squidex.Assets
 {
-    public sealed class ImageMagickThumbnailGenerator : IAssetThumbnailGenerator
+    public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
     {
-        public Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
+        public override bool CanComputeBlurHash()
+        {
+            return false;
+        }
+
+        protected override Task<string?> ComputeBlurHashCoreAsync(Stream source, string mimeType, BlurOptions options,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(options, nameof(options));
-
             return Task.FromResult<string?>(null);
         }
 
-        public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, string[] destinationMimeTypes, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(destination, nameof(destination));
-            Guard.NotNull(options, nameof(options));
-
-            if (!options.IsValid)
-            {
-                await source.CopyToAsync(destination, ct);
-                return;
-            }
-
             var w = options.TargetWidth ?? 0;
             var h = options.TargetHeight ?? 0;
 
@@ -52,7 +42,7 @@ namespace Squidex.Assets
                 var firstImage = collection[0];
                 var firstFormat = firstImage.Format;
 
-                var targetFormat = options.GetFormat(firstFormat);
+                var targetFormat = destinationMimeTypes.GetFormat(firstFormat);
                 var targetFormatInfo = MagickFormatInfo.Create(targetFormat);
 
                 collection.Coalesce();
@@ -133,13 +123,9 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
+        protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(destination, nameof(destination));
-
             using (var collection = new MagickImageCollection())
             {
                 await collection.ReadAsync(source, GetFormat(mimeType), ct);
@@ -155,12 +141,9 @@ namespace Squidex.Assets
             }
         }
 
-        public Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
+        protected override Task<ImageInfo?> GetImageInfoCoreAsync(Stream source, string mimeType,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-
             try
             {
                 using (var image = new MagickImage())

@@ -5,13 +5,14 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 using Squidex.Assets.Internal;
 
 namespace Squidex.Assets.Remote
 {
-    public sealed class RemoteThumbnailGenerator : IAssetThumbnailGenerator
+    public sealed class RemoteThumbnailGenerator : AssetThumbnailGeneratorBase
     {
         private readonly IHttpClientFactory httpClientFactory;
         private readonly IAssetThumbnailGenerator inner;
@@ -23,13 +24,24 @@ namespace Squidex.Assets.Remote
             this.inner = inner;
         }
 
-        public async Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
+        public override bool CanReadAndWrite(string mimeType)
+        {
+            return inner.CanReadAndWrite(mimeType);
+        }
+
+        public override bool CanComputeBlurHash()
+        {
+            return inner.CanComputeBlurHash();
+        }
+
+        public override bool IsResizable(string mimeType, ResizeOptions options, [MaybeNullWhen(false)] out string? destinationMimeType)
+        {
+            return inner.IsResizable(mimeType, options, out destinationMimeType);
+        }
+
+        protected override async Task<string?> ComputeBlurHashCoreAsync(Stream source, string mimeType, BlurOptions options,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(options, nameof(options));
-
             using (var httpClient = httpClientFactory.CreateClient("Resize"))
             {
                 var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/blur?{BuildQueryString(options)}")
@@ -56,7 +68,7 @@ namespace Squidex.Assets.Remote
             }
         }
 
-        public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, string[] destinationMimeTypes, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
             Guard.NotNull(source, nameof(source));
@@ -84,13 +96,9 @@ namespace Squidex.Assets.Remote
             }
         }
 
-        public async Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
+        protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(destination, nameof(destination));
-
             using (var httpClient = httpClientFactory.CreateClient("Resize"))
             {
                 var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/orient")
@@ -111,12 +119,9 @@ namespace Squidex.Assets.Remote
             }
         }
 
-        public Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
+        protected override Task<ImageInfo?> GetImageInfoCoreAsync(Stream source, string mimeType,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-
             return inner.GetImageInfoAsync(source, mimeType, ct);
         }
 

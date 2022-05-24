@@ -29,7 +29,7 @@ using ISResizeOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
 namespace Squidex.Assets
 {
-    public sealed class ImageSharpThumbnailGenerator : IAssetThumbnailGenerator
+    public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
     {
         private readonly Encoder blurHashEncoder = new Encoder();
         private readonly HashSet<string> mimeTypes;
@@ -39,23 +39,19 @@ namespace Squidex.Assets
             mimeTypes = Configuration.Default.ImageFormatsManager.ImageFormats.SelectMany(x => x.MimeTypes).ToHashSet();
         }
 
-        public bool CanRead(string mimeType)
-        {
-            return CanWrite(mimeType);
-        }
-
-        public bool CanWrite(string mimeType)
+        public override bool CanReadAndWrite(string mimeType)
         {
             return mimeType != null && mimeTypes.Contains(mimeType);
         }
 
-        public async Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
+        public override bool CanComputeBlurHash()
+        {
+            return true;
+        }
+
+        protected override async Task<string?> ComputeBlurHashCoreAsync(Stream source, string mimeType, BlurOptions options,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(options, nameof(options));
-
             try
             {
                 using (var image = await Image.LoadAsync<Rgb24>(source, ct))
@@ -69,20 +65,9 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, string[] destinationMimeTypes, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(destination, nameof(destination));
-            Guard.NotNull(options, nameof(options));
-
-            if (!options.IsValid)
-            {
-                await source.CopyToAsync(destination, ct);
-                return;
-            }
-
             var w = options.TargetWidth ?? 0;
             var h = options.TargetHeight ?? 0;
 
@@ -134,18 +119,15 @@ namespace Squidex.Assets
                     });
                 }
 
-                var encoder = options.GetEncoder(format);
+                var encoder = options.GetEncoder(destinationMimeTypes, format);
 
                 await image.SaveAsync(destination, encoder, ct);
             }
         }
 
-        public async Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
+        protected override async Task<ImageInfo?> GetImageInfoCoreAsync(Stream source, string mimeType,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-
             try
             {
                 var (image, format) = await Image.IdentifyWithFormatAsync(source, ct);
@@ -163,13 +145,9 @@ namespace Squidex.Assets
             }
         }
 
-        public async Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
+        protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(destination, nameof(destination));
-
             using (var image = Image.Load(source, out var format))
             {
                 var encoder = Configuration.Default.ImageFormatsManager.FindEncoder(format);

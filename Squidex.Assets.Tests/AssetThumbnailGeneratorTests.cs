@@ -93,6 +93,32 @@ namespace Squidex.Assets
         }
 
         [Fact]
+        public async Task Should_return_same_image_if_no_target_format_is_same_as_source_type()
+        {
+            var (mimeType, source) = GetImage(ImageFormat.PNG);
+
+            await using (var target = GetStream("resize-copy"))
+            {
+                await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions { Format = ImageFormat.PNG });
+
+                Assert.Equal(target.Length, source.Length);
+            }
+        }
+
+        [Fact]
+        public async Task Should_return_same_image_if_any_target_formats_ar_same_as_source_type()
+        {
+            var (mimeType, source) = GetImage(ImageFormat.PNG);
+
+            await using (var target = GetStream("resize-copy2"))
+            {
+                await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions { Formats = new[] { ImageFormat.PNG, ImageFormat.JPEG } });
+
+                Assert.Equal(target.Length, source.Length);
+            }
+        }
+
+        [Fact]
         public async Task Should_upsize_image_to_target()
         {
             var (mimeType, source) = GetImage(ImageFormat.PNG);
