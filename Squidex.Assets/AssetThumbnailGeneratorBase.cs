@@ -35,7 +35,7 @@ namespace Squidex.Assets
             // The mime types are ordered by priority.
             var destinationMimeTypes = options.GetDestinationMimeTypes().Where(CanReadAndWrite).ToArray();
 
-            if (options.IsResize || !destinationMimeTypes.Contains(mimeType, StringComparer.OrdinalIgnoreCase) || options.Force)
+            if ((destinationMimeTypes.Any() && !destinationMimeTypes.Contains(mimeType, StringComparer.OrdinalIgnoreCase)) || options.IsResize || options.Force)
             {
                 destinationMimeType = destinationMimeTypes.FirstOrDefault() ?? mimeType;
                 return true;

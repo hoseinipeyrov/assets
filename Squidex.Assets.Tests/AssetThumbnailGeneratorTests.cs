@@ -246,6 +246,15 @@ namespace Squidex.Assets
             Assert.Null(destimationMimeType);
         }
 
+        [Fact]
+        public void Should_not_be_resizable_if_no_format_given()
+        {
+            var result = sut.IsResizable("image/png", new ResizeOptions(), out var destimationMimeType);
+
+            Assert.False(result);
+            Assert.Null(destimationMimeType);
+        }
+
         private async Task Resize(string name, string? color, ResizeMode mode)
         {
             var (mimeType, source) = GetImage("logo.png");
