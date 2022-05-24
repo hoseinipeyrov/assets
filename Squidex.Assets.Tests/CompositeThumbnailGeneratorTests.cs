@@ -7,18 +7,20 @@
 
 namespace Squidex.Assets
 {
-    public class ImageMagickThumbnailGeneratorTests : AssetThumbnailGeneratorTests
+    public class CompositeThumbnailGeneratorTests : AssetThumbnailGeneratorTests
     {
-        protected override bool SupportsBlurHash => false;
-
         protected override string Name()
         {
-            return "magick";
+            return "composite";
         }
 
         protected override IAssetThumbnailGenerator CreateSut()
         {
-            return new ImageMagickThumbnailGenerator();
+            return new CompositeThumbnailGenerator(new IAssetThumbnailGenerator[]
+            {
+                new ImageSharpThumbnailGenerator(),
+                new ImageMagickThumbnailGenerator()
+            });
         }
     }
 }

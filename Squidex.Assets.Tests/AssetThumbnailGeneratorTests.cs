@@ -44,7 +44,7 @@ namespace Squidex.Assets
 
         protected abstract string Name();
 
-        protected virtual HashSet<ImageFormat> SupportedFormats { get; }
+        protected virtual HashSet<ImageFormat> SupportedFormats => Enum.GetValues<ImageFormat>().ToHashSet();
 
         protected virtual bool SupportsBlurHash => true;
 
@@ -66,10 +66,7 @@ namespace Squidex.Assets
 
             await using (var target = GetStream($"transform.{sourceFormat.ToString().ToLowerInvariant()}", targetFormat.ToString().ToLowerInvariant()))
             {
-                await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
-                {
-                    Format = targetFormat
-                });
+                await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions { Format = targetFormat });
 
                 target.Position = 0;
 
