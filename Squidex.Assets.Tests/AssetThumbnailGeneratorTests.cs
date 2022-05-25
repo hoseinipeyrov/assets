@@ -13,7 +13,9 @@ namespace Squidex.Assets
 {
     public abstract class AssetThumbnailGeneratorTests
     {
+#pragma warning disable SA1401 // Fields should be private
         protected readonly IAssetThumbnailGenerator sut;
+#pragma warning restore SA1401 // Fields should be private
 
         public static IEnumerable<object[]> GetConversions()
         {
