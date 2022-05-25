@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
@@ -69,14 +68,9 @@ namespace Squidex.Assets.Remote
             }
         }
 
-        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, IReadOnlyList<string> destinationMimeTypes, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
-            Guard.NotNull(source, nameof(source));
-            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-            Guard.NotNull(destination, nameof(destination));
-            Guard.NotNull(options, nameof(options));
-
             using (var httpClient = httpClientFactory.CreateClient("Resize"))
             {
                 var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/resize{BuildQueryString(options)}")

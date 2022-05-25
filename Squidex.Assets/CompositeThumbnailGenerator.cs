@@ -34,22 +34,20 @@ namespace Squidex.Assets
             return inners.Any(x => x.CanComputeBlurHash());
         }
 
-        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, IReadOnlyList<string> destinationMimeTypes, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
             await maxTasks.WaitAsync(ct);
             try
             {
-                // Find the best candidate for the destination mime type.
-                foreach (var destinationMimeType in destinationMimeTypes)
+                var targetMimeType = options.Format?.ToMimeType() ?? mimeType;
+
+                foreach (var inner in inners)
                 {
-                    foreach (var inner in inners)
+                    if (inner.CanReadAndWrite(mimeType) && inner.CanReadAndWrite(targetMimeType))
                     {
-                        if (inner.CanReadAndWrite(destinationMimeType) && inner.CanReadAndWrite(mimeType))
-                        {
-                            await inner.CreateThumbnailAsync(source, mimeType, destination, options, ct);
-                            return;
-                        }
+                        await inner.CreateThumbnailAsync(source, mimeType, destination, options, ct);
+                        return;
                     }
                 }
             }

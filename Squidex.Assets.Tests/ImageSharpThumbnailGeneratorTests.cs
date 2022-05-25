@@ -5,6 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Xunit;
+
 namespace Squidex.Assets
 {
     public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
@@ -28,6 +30,15 @@ namespace Squidex.Assets
         protected override IAssetThumbnailGenerator CreateSut()
         {
             return new ImageSharpThumbnailGenerator();
+        }
+
+        [Fact]
+        public void Should_not_be_resizable_if_format_not_supported2()
+        {
+            var result = sut.IsResizable("image/png", new ResizeOptions { Format = ImageFormat.AVIF }, out var destimationMimeType);
+
+            Assert.False(result);
+            Assert.Null(destimationMimeType);
         }
     }
 }

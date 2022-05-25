@@ -6,30 +6,23 @@
 // ==========================================================================
 
 using System;
-using System.Collections.Generic;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Formats.Webp;
 
 namespace Squidex.Assets.Internal
 {
     internal static class Extensions
     {
-        public static IImageEncoder GetEncoder(this ResizeOptions options, IReadOnlyList<string> mimeTypes, IImageFormat format)
+        public static IImageEncoder GetEncoder(this ResizeOptions options, IImageFormat format)
         {
             var imageFormatsManager = Configuration.Default.ImageFormatsManager;
 
-            foreach (var mimeType in mimeTypes)
+            if (options.Format != null)
             {
-                var mimeTypeFormat = imageFormatsManager.FindFormatByMimeType(mimeType);
-
-                // Use the best matching format.
-                if (mimeTypeFormat != null)
-                {
-                    format = mimeTypeFormat;
-                    break;
-                }
+                format = imageFormatsManager.FindFormatByMimeType(options.Format.Value.ToMimeType()) ?? format;
             }
 
             var encoder = imageFormatsManager.FindEncoder(format);
@@ -52,6 +45,14 @@ namespace Squidex.Assets.Internal
             if (encoder is JpegEncoder jpg && jpg.Quality != quality)
             {
                 encoder = new JpegEncoder
+                {
+                    Quality = quality
+                };
+            }
+
+            if (encoder is WebpEncoder webp && webp.Quality != quality)
+            {
+                encoder = new WebpEncoder
                 {
                     Quality = quality
                 };

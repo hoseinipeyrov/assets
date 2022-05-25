@@ -65,7 +65,7 @@ namespace Squidex.Assets
             }
         }
 
-        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, IReadOnlyList<string> destinationMimeTypes, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
             var w = options.TargetWidth ?? 0;
@@ -119,7 +119,7 @@ namespace Squidex.Assets
                     });
                 }
 
-                var encoder = options.GetEncoder(destinationMimeTypes, format);
+                var encoder = options.GetEncoder(format);
 
                 await image.SaveAsync(destination, encoder, ct);
             }

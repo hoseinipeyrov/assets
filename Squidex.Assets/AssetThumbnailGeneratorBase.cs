@@ -24,6 +24,9 @@ namespace Squidex.Assets
 
         public virtual bool IsResizable(string mimeType, ResizeOptions options, [MaybeNullWhen(false)] out string? destinationMimeType)
         {
+            Guard.NotNull(options, nameof(options));
+            Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+
             destinationMimeType = null;
 
             // If we cannot read or write from the mime type we can just stop here.
@@ -32,12 +35,25 @@ namespace Squidex.Assets
                 return false;
             }
 
-            // The mime types are ordered by priority.
-            var destinationMimeTypes = options.GetDestinationMimeTypes().Where(CanReadAndWrite).ToArray();
-
-            if ((destinationMimeTypes.Any() && !destinationMimeTypes.Contains(mimeType, StringComparer.OrdinalIgnoreCase)) || options.IsResize || options.Force)
+            string? targetMimeType;
+            try
             {
-                destinationMimeType = destinationMimeTypes.FirstOrDefault() ?? mimeType;
+                targetMimeType = options.Format?.ToMimeType();
+
+                if (targetMimeType != null && (!CanReadAndWrite(targetMimeType) || targetMimeType == mimeType))
+                {
+                    targetMimeType = null;
+                }
+            }
+            catch (ArgumentException)
+            {
+                targetMimeType = null;
+            }
+
+            if (options.TargetWidth > 0 || options.TargetHeight > 0 || options.Quality > 0 || targetMimeType != null)
+            {
+                destinationMimeType = targetMimeType ?? mimeType;
+
                 return true;
             }
 
@@ -115,16 +131,10 @@ namespace Squidex.Assets
                 return;
             }
 
-            // The mime types are ordered by priority.
-            var destinationMimeTypes = options.GetDestinationMimeTypes().Where(CanReadAndWrite).ToList();
-
-            // The current mime type is also an option.
-            destinationMimeTypes.Add(mimeType);
-
-            await CreateThumbnailCoreAsync(source, mimeType, destinationMimeTypes, destination, options, ct);
+            await CreateThumbnailCoreAsync(source, mimeType, destination, options, ct);
         }
 
-        protected abstract Task CreateThumbnailCoreAsync(Stream source, string mimeType, IReadOnlyList<string> destinationMimeTypes, Stream destination, ResizeOptions options,
+        protected abstract Task CreateThumbnailCoreAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
             CancellationToken ct = default);
     }
 }

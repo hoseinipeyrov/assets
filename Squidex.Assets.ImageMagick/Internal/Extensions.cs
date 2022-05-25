@@ -70,11 +70,11 @@ namespace Squidex.Assets.Internal
             }
         }
 
-        public static MagickFormat GetFormat(this IReadOnlyList<string> mimeTypes, MagickFormat format)
+        public static MagickFormat GetFormat(this ResizeOptions options, MagickFormat format)
         {
             var result = format;
 
-            switch (mimeTypes.FirstOrDefault()?.ToImageFormat())
+            switch (options.Format)
             {
                 case ImageFormat.AVIF:
                     result = MagickFormat.Avif;

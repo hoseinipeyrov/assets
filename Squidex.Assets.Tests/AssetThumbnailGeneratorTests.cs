@@ -13,7 +13,7 @@ namespace Squidex.Assets
 {
     public abstract class AssetThumbnailGeneratorTests
     {
-        private readonly IAssetThumbnailGenerator sut;
+        protected readonly IAssetThumbnailGenerator sut;
 
         public static IEnumerable<object[]> GetConversions()
         {
@@ -97,19 +97,6 @@ namespace Squidex.Assets
             await using (var target = GetStream("resize-copy"))
             {
                 await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions { Format = ImageFormat.PNG });
-
-                Assert.Equal(target.Length, source.Length);
-            }
-        }
-
-        [Fact]
-        public async Task Should_return_same_image_if_any_target_formats_ar_same_as_source_type()
-        {
-            var (mimeType, source) = GetImage(ImageFormat.PNG);
-
-            await using (var target = GetStream("resize-copy2"))
-            {
-                await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions { Formats = new[] { ImageFormat.PNG, ImageFormat.JPEG } });
 
                 Assert.Equal(target.Length, source.Length);
             }
@@ -217,15 +204,6 @@ namespace Squidex.Assets
         }
 
         [Fact]
-        public void Should_be_resizable_if_no_format_matchs()
-        {
-            var result = sut.IsResizable("image/png", new ResizeOptions { Formats = new[] { ImageFormat.WEBP } }, out var destimationMimeType);
-
-            Assert.True(result);
-            Assert.Equal("image/webp", destimationMimeType);
-        }
-
-        [Fact]
         public void Should_be_resizable_if_format_does_not_match()
         {
             var result = sut.IsResizable("image/png", new ResizeOptions { Format = ImageFormat.WEBP }, out var destimationMimeType);
@@ -238,6 +216,15 @@ namespace Squidex.Assets
         public void Should_not_be_resizable_if_format_does_match()
         {
             var result = sut.IsResizable("image/png", new ResizeOptions { Format = ImageFormat.PNG }, out var destimationMimeType);
+
+            Assert.False(result);
+            Assert.Null(destimationMimeType);
+        }
+
+        [Fact]
+        public void Should_not_be_resizable_if_format_not_supported()
+        {
+            var result = sut.IsResizable("image/png", new ResizeOptions { Format = (ImageFormat)123 }, out var destimationMimeType);
 
             Assert.False(result);
             Assert.Null(destimationMimeType);

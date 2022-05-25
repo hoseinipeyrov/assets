@@ -16,8 +16,6 @@ namespace Squidex.Assets
 
         public ImageFormat? Format { get; set; }
 
-        public ImageFormat[]? Formats { get; set; }
-
         public ResizeMode Mode { get; set; }
 
         public int? TargetWidth { get; set; }
@@ -32,7 +30,7 @@ namespace Squidex.Assets
 
         public string? Background { get; set; }
 
-        public bool Force { get; set; }
+        public bool ReformatWithoutFrameLoss { get; set; }
 
         internal bool IsResize
         {
@@ -49,11 +47,6 @@ namespace Squidex.Assets
             if (Format != null)
             {
                 yield return ("format", Format.ToString()!);
-            }
-
-            if (Formats?.Length > 0)
-            {
-                yield return ("formats", string.Join(',', Formats.Select(x => x.ToString())));
             }
 
             if (TargetWidth != null)
@@ -84,6 +77,11 @@ namespace Squidex.Assets
             if (Background != null)
             {
                 yield return ("background", Background);
+            }
+
+            if (ReformatWithoutFrameLoss)
+            {
+                yield return ("reformatWithoutFrameLoss", "1");
             }
 
             if (ExtraParameters != null)
@@ -155,27 +153,11 @@ namespace Squidex.Assets
                 result.FocusY = focusY;
             }
 
+            result.ReformatWithoutFrameLoss |= parameters.TryGetValue("reformatWithoutFrameLoss", out var value) && value == "1";
+
             if (parameters.TryGetValue("background", out var background))
             {
                 result.Background = background;
-            }
-
-            if (parameters.TryGetValue("formats", out var formats))
-            {
-                var formatList = new List<ImageFormat>();
-
-                foreach (var f in formats.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                {
-                    if (Enum.TryParse<ImageFormat>(f, out var fv))
-                    {
-                        formatList.Add(fv);
-                    }
-                }
-
-                if (formatList.Count > 0)
-                {
-                    result.Formats = formatList.ToArray();
-                }
             }
 
             return result;
@@ -213,12 +195,6 @@ namespace Squidex.Assets
             {
                 sb.Append("_format_");
                 sb.Append(Format.ToString());
-            }
-
-            if (Formats?.Length > 0)
-            {
-                sb.Append("_format_");
-                sb.Append(string.Join('_', Formats.Select(x => x.ToString())));
             }
 
             if (!string.IsNullOrWhiteSpace(Background))

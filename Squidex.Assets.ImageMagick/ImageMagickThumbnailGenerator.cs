@@ -30,7 +30,7 @@ namespace Squidex.Assets
             return Task.FromResult<string?>(null);
         }
 
-        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, IReadOnlyList<string> destinationMimeTypes, Stream destination, ResizeOptions options,
+        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
             CancellationToken ct = default)
         {
             var w = options.TargetWidth ?? 0;
@@ -43,7 +43,7 @@ namespace Squidex.Assets
                 var firstImage = collection[0];
                 var firstFormat = firstImage.Format;
 
-                var targetFormat = destinationMimeTypes.GetFormat(firstFormat);
+                var targetFormat = options.GetFormat(firstFormat);
                 var targetFormatInfo = MagickFormatInfo.Create(targetFormat);
 
                 collection.Coalesce();

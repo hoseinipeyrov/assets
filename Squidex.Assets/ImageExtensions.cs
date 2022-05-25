@@ -58,21 +58,5 @@ namespace Squidex.Assets
                     throw new ArgumentException("Invalid format.", nameof(format));
             }
         }
-
-        public static IEnumerable<string> GetDestinationMimeTypes(this ResizeOptions options)
-        {
-            if (options.Formats != null)
-            {
-                foreach (var format in options.Formats)
-                {
-                    yield return format.ToMimeType();
-                }
-            }
-
-            if (options.Format != null)
-            {
-                yield return options.Format.Value.ToMimeType();
-            }
-        }
     }
 }
