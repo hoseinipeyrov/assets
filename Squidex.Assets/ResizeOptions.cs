@@ -30,8 +30,6 @@ namespace Squidex.Assets
 
         public string? Background { get; set; }
 
-        public bool ReformatWithoutFrameLoss { get; set; }
-
         internal bool IsResize
         {
             get => TargetWidth > 0 || TargetHeight > 0 || Quality > 0;
@@ -77,11 +75,6 @@ namespace Squidex.Assets
             if (Background != null)
             {
                 yield return ("background", Background);
-            }
-
-            if (ReformatWithoutFrameLoss)
-            {
-                yield return ("reformatWithoutFrameLoss", "1");
             }
 
             if (ExtraParameters != null)
@@ -152,8 +145,6 @@ namespace Squidex.Assets
             {
                 result.FocusY = focusY;
             }
-
-            result.ReformatWithoutFrameLoss |= parameters.TryGetValue("reformatWithoutFrameLoss", out var value) && value == "1";
 
             if (parameters.TryGetValue("background", out var background))
             {
